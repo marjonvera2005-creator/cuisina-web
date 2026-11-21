@@ -7,6 +7,7 @@ import { expireStaleBookings, fetchMyBusiness } from '../../lib/owner'
 import { db, errorMessage } from '../../lib/supabase'
 
 import { useQuery } from '../../lib/useQuery'
+import { toast, useToastMessage } from '../../lib/toast'
 
 const STATUS_ORDER = ['pending', 'accepted', 'in_progress', 'completed']
 const STATUS_LABEL: Record<string, string> = { pending: 'Pending', accepted: 'Accepted', in_progress: 'In progress', completed: 'Completed' }
@@ -55,7 +56,7 @@ export default function Calendar() {
   const [selected, setSelected] = useState<string | null>(null)
   const [reason, setReason] = useState('')
   const [busy, setBusy] = useState(false)
-  const [problem, setProblem] = useState('')
+  const [problem, setProblem] = useToastMessage('error')
 
   const byDate = useMemo(() => {
     const map: Record<string, Entry[]> = {}
@@ -81,6 +82,7 @@ export default function Calendar() {
         .insert({ business_id: data.business.id, unavailable_date: date, reason: reason.trim() || null })
       if (insertError) throw insertError
       setReason('')
+      toast('Date marked as not available.')
       reload()
     } catch (err) {
       setProblem(errorMessage(err))
@@ -94,6 +96,7 @@ export default function Calendar() {
     try {
       const { error: deleteError } = await db().from('business_availability').delete().eq('id', id)
       if (deleteError) throw deleteError
+      toast('Date is available again.')
       reload()
     } catch (err) {
       setProblem(errorMessage(err))

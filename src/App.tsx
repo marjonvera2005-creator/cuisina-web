@@ -31,6 +31,7 @@ import Reports from './pages/admin/Reports'
 import OwnerReports from './pages/owner/Reports'
 import DisplaySettingsPage from './components/DisplaySettings'
 import { AskDialogHost } from './components/AskDialog'
+import { Toaster } from './components/Toaster'
 
 function ScrollManager() {
   const { pathname } = useLocation()
@@ -80,6 +81,7 @@ export default function App() {
           <Route path="*" element={<NotFound />} />
         </Routes>
       <AskDialogHost />
+      <Toaster />
     </BrowserRouter>
   )
 }

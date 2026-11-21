@@ -10,6 +10,7 @@ import { fetchMyBusiness } from '../../lib/owner'
 import { db, errorMessage, publicImageUrl } from '../../lib/supabase'
 import { useQuery } from '../../lib/useQuery'
 import { askConfirm } from '../../components/AskDialog'
+import { useToastMessage } from '../../lib/toast'
 
 type DocumentRow = { id: string; file_path: string; document_type: string; created_at: string }
 
@@ -30,8 +31,8 @@ export default function Business() {
   }, [userId])
 
   const [form, setForm] = useState(EMPTY)
-  const [message, setMessage] = useState('')
-  const [problem, setProblem] = useState('')
+  const [message, setMessage] = useToastMessage('success')
+  const [problem, setProblem] = useToastMessage('error')
   const [busy, setBusy] = useState(false)
   const [docType, setDocType] = useState(DOCUMENT_TYPES[0])
 
@@ -250,8 +251,8 @@ function BusinessLocation({ businessId }: { businessId: string }) {
   }, [businessId])
   const [point, setPoint] = useState<Point | null>(null)
   const [busy, setBusy] = useState(false)
-  const [message, setMessage] = useState('')
-  const [problem, setProblem] = useState('')
+  const [message, setMessage] = useToastMessage('success')
+  const [problem, setProblem] = useToastMessage('error')
   const [search, setSearch] = useState<string | null>(null)
   const [focus, setFocus] = useState<(Point & { zoom: number; at: number }) | null>(null)
   const current = point ?? saved.data?.point ?? null
@@ -350,8 +351,8 @@ function BookingNotice({ businessId }: { businessId: string }) {
   }, [businessId])
   const [days, setDays] = useState('')
   const [busy, setBusy] = useState(false)
-  const [message, setMessage] = useState('')
-  const [problem, setProblem] = useState('')
+  const [message, setMessage] = useToastMessage('success')
+  const [problem, setProblem] = useToastMessage('error')
   const value = days === '' ? String(saved.data ?? 1) : days
   const parsed = Number(value)
   const valid = Number.isInteger(parsed) && parsed >= 1 && parsed <= 365

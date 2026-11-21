@@ -9,6 +9,7 @@ import { CatererCustomers } from './CatererCustomers'
 import type { CatererInfo } from './CatererCustomers'
 import { askConfirm } from '../../components/AskDialog'
 import { Pager, paginate } from '../../components/Pager'
+import { toast, useToastMessage } from '../../lib/toast'
 
 type UserRow = {
   user_id: string
@@ -51,7 +52,7 @@ export default function Users() {
   }, [])
   const [tab, setTab] = useState<Tab>('customer')
   const [search, setSearch] = useState('')
-  const [problem, setProblem] = useState('')
+  const [problem, setProblem] = useToastMessage('error')
   const [openOwner, setOpenOwner] = useState<string | null>(null)
   const [page, setPage] = useState(1)
 
@@ -63,6 +64,7 @@ export default function Users() {
     setProblem('')
     const { error: rpcError } = await db().rpc('set_user_active', { p_user_id: user.user_id, p_active: active })
     if (rpcError) setProblem(errorMessage(rpcError))
+    else toast(`${user.full_name || user.email} ${active ? 'reactivated' : 'deactivated'}.`)
     reload()
   }
 

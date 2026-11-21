@@ -4,6 +4,7 @@ import { EmptyState, ErrorBanner } from '../../components/Brand'
 import { db, errorMessage } from '../../lib/supabase'
 import { useQuery } from '../../lib/useQuery'
 import { askConfirm } from '../../components/AskDialog'
+import { toast, useToastMessage } from '../../lib/toast'
 
 type Category = { id: string; name: string }
 
@@ -15,7 +16,7 @@ export default function Categories() {
   }, [])
   const [name, setName] = useState('')
   const [editing, setEditing] = useState<Category | null>(null)
-  const [problem, setProblem] = useState('')
+  const [problem, setProblem] = useToastMessage('error')
 
   async function save(event: FormEvent) {
     event.preventDefault()
@@ -25,6 +26,7 @@ export default function Categories() {
       ? await db().from('event_categories').update({ name: value }).eq('id', editing.id)
       : await db().from('event_categories').insert({ name: value })
     if (result.error) { setProblem(errorMessage(result.error)); return }
+    toast('Event type saved.')
     setName(''); setEditing(null)
     reload()
   }
@@ -34,6 +36,7 @@ export default function Categories() {
     setProblem('')
     const { error: deleteError } = await db().from('event_categories').delete().eq('id', category.id)
     if (deleteError) setProblem(errorMessage(deleteError))
+    else toast('Event type removed.')
     reload()
   }
 

@@ -8,6 +8,7 @@ import { formatRate } from '../../lib/commission'
 import { formatDate, peso } from '../../lib/format'
 import { db, errorMessage } from '../../lib/supabase'
 import { useQuery } from '../../lib/useQuery'
+import { toast, useToastMessage } from '../../lib/toast'
 
 type Report = {
   rate: number
@@ -36,13 +37,12 @@ export default function BusinessModel() {
   }, [])
   const [rate, setRate] = useState('')
   const [confirm, setConfirm] = useState<number | null>(null)
-  const [formError, setFormError] = useState('')
-  const [saved, setSaved] = useState('')
+  const [formError, setFormError] = useToastMessage('error')
+  const [saved, setSaved] = useToastMessage('success')
   // Changing one caterer's rate: the caterer, the typed rate, and "use the platform rate".
   const [editing, setEditing] = useState<CatererRate | null>(null)
   const [catererRate, setCatererRate] = useState('')
   const [useDefault, setUseDefault] = useState(false)
-  const [rateMessage, setRateMessage] = useState<{ ok: boolean; text: string } | null>(null)
 
   if (loading && !data) return <EmptyState title="Loading business model…" />
   if (error) {
@@ -73,21 +73,19 @@ export default function BusinessModel() {
     setEditing(caterer)
     setUseDefault(caterer.commission_rate == null)
     setCatererRate(caterer.commission_rate == null ? '' : String(Number(caterer.commission_rate)))
-    setRateMessage(null)
   }
 
   async function saveCatererRate() {
     if (!editing) return
     const value = useDefault ? null : Number(catererRate)
     if (value != null && (!catererRate.trim() || !Number.isFinite(value) || value < 0 || value > 50)) {
-      setRateMessage({ ok: false, text: 'Enter a commission between 0 and 50 (%), or choose the default rate.' })
+      toast('Enter a commission between 0 and 50 (%), or choose the default rate.', 'error')
       setEditing(null)
       return
     }
     const { error: saveError } = await db().rpc('set_business_commission_rate', { p_business_id: editing.id, p_rate: value })
-    setRateMessage(saveError
-      ? { ok: false, text: errorMessage(saveError) }
-      : { ok: true, text: `${editing.business_name} now uses ${value == null ? `the default rate (${formatRate(current)})` : formatRate(value)} for new bookings.` })
+    if (saveError) toast(errorMessage(saveError), 'error')
+    else toast(`${editing.business_name} now uses ${value == null ? `the default rate (${formatRate(current)})` : formatRate(value)} for new bookings.`)
     setEditing(null)
     reload()
   }
@@ -116,7 +114,6 @@ export default function BusinessModel() {
 
       <div className="admin-card">
         <div className="card-heading"><div><h2>Rate per caterer</h2><p className="eyebrow">Give a caterer its own commission. Others use the default rate ({formatRate(current)}).</p></div></div>
-        {rateMessage && <div className={`${rateMessage.ok ? 'form-notice' : 'form-error'} bm-msg`} role={rateMessage.ok ? 'status' : 'alert'}>{rateMessage.text}</div>}
         {data.caterers == null ? (
           <p className="sys-note">To set a rate per caterer, run <code>supabase/migrations/032_caterer_commission.sql</code> in the Supabase SQL Editor, then refresh this page.</p>
         ) : data.caterers.length === 0 ? <EmptyState title="No caterers yet" /> : (

@@ -7,6 +7,7 @@ import { fetchMyBusiness } from '../../lib/owner'
 import { db, errorMessage, publicImageUrl } from '../../lib/supabase'
 import { useQuery } from '../../lib/useQuery'
 import { askConfirm } from '../../components/AskDialog'
+import { toast, useToastMessage } from '../../lib/toast'
 
 type PricingType = 'flat' | 'per_person' | 'per_item'
 type Kind = 'food' | 'other'
@@ -50,7 +51,7 @@ export default function Addons() {
   }, [userId])
 
   const [draft, setDraft] = useState<Draft | null>(null)
-  const [problem, setProblem] = useState('')
+  const [problem, setProblem] = useToastMessage('error')
   const [busy, setBusy] = useState(false)
 
   async function uploadPhoto(file: File | undefined) {
@@ -91,6 +92,7 @@ export default function Addons() {
         : await db().from('business_addons').insert({ ...payload, sort_order: data.addons.length })
       if (result.error) throw result.error
       setDraft(null)
+      toast('Add-on saved.')
       reload()
     } catch (err) {
       setProblem(errorMessage(err))
@@ -111,6 +113,7 @@ export default function Addons() {
     setProblem('')
     const { error: deleteError } = await db().from('business_addons').delete().eq('id', addon.id)
     if (deleteError) setProblem(errorMessage(deleteError))
+    else toast('Add-on deleted.')
     reload()
   }
 

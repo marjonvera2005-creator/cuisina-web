@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { ConfirmDialog } from './Dialog'
 import { useAuth } from '../lib/auth'
 import { db, errorMessage } from '../lib/supabase'
+import { toast } from '../lib/toast'
 
 export type ReportCategory = 'caterer' | 'customer' | 'booking' | 'payment' | 'system' | 'other' | 'deactivation'
 
@@ -49,6 +50,7 @@ export function ReportProblemDialog({ booking, onClose, onSent, initialCategory 
       description: description.trim(),
     })
     if (error) { setProblem(errorMessage(error)); return }
+    toast(asking ? 'Request sent to the administrator.' : 'Report sent. The administrator will reply in Notifications.')
     onSent?.()
     onClose()
   }
@@ -62,6 +64,10 @@ export function ReportProblemDialog({ booking, onClose, onSent, initialCategory 
       confirmLabel={asking ? 'Send request' : 'Send report'}
       inputLabel={asking ? 'Why should this customer be deactivated?' : 'What happened?'}
       inputRequired
+      inputPlaceholder={asking
+        ? 'e.g. The customer booked 3 times and never showed up, and did not answer our calls.'
+        : 'e.g. The customer cancelled on the day of the event after we had already bought the ingredients.'}
+      error={problem}
       onConfirm={send}
       onCancel={onClose}
     >
@@ -73,7 +79,6 @@ export function ReportProblemDialog({ booking, onClose, onSent, initialCategory 
       <label>Subject
         <input value={subject} onChange={event => setSubject(event.target.value)} maxLength={150} required placeholder={asking ? 'e.g. Please deactivate this customer' : 'e.g. Customer did not show up'} />
       </label>
-      {problem && <div className="form-error">{problem}</div>}
     </ConfirmDialog>
   )
 }

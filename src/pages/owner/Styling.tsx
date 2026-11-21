@@ -7,6 +7,7 @@ import { fetchMyBusiness } from '../../lib/owner'
 import { db, errorMessage, publicImageUrl } from '../../lib/supabase'
 import { useQuery } from '../../lib/useQuery'
 import { askConfirm } from '../../components/AskDialog'
+import { toast, useToastMessage } from '../../lib/toast'
 
 type Kind = 'design' | 'theme' | 'color' | 'flower'
 type PricingType = 'flat' | 'per_person' | 'per_table'
@@ -62,7 +63,7 @@ export default function Styling() {
   }, [userId])
 
   const [draft, setDraft] = useState<Draft | null>(null)
-  const [problem, setProblem] = useState('')
+  const [problem, setProblem] = useToastMessage('error')
   const [busy, setBusy] = useState(false)
   const [seats, setSeats] = useState<string | null>(null)
 
@@ -86,6 +87,7 @@ export default function Styling() {
         : await db().from('business_styling_options').insert({ ...payload, sort_order: data.options.filter(o => o.kind === draft.kind).length })
       if (result.error) throw result.error
       setDraft(null)
+      toast('Styling option saved.')
       reload()
     } catch (err) {
       setProblem(errorMessage(err))
@@ -123,6 +125,7 @@ export default function Styling() {
     setProblem('')
     const { error: deleteError } = await db().from('business_styling_options').delete().eq('id', option.id)
     if (deleteError) setProblem(errorMessage(deleteError))
+    else toast('Styling option deleted.')
     reload()
   }
 

@@ -16,13 +16,26 @@ type Props = {
   onConfirm: (value: string) => void | Promise<void>
   onCancel: () => void
   children?: ReactNode
+  /** Example text inside the text area. */
+  inputPlaceholder?: string
+  /** A problem with what was typed: shown under the text area, then fades away after 3 seconds. */
+  error?: string
 }
 
 const FOCUSABLE = 'button:not([disabled]), input:not([disabled]), textarea:not([disabled]), select:not([disabled]), a[href], [tabindex]:not([tabindex="-1"])'
 
-export function ConfirmDialog({ title, description, confirmLabel, cancelLabel = 'Go back', hideCancel, inputLabel, inputRequired, danger, onConfirm, onCancel, children }: Props) {
+export function ConfirmDialog({ title, description, confirmLabel, cancelLabel = 'Go back', hideCancel, inputLabel, inputRequired, danger, onConfirm, onCancel, children, inputPlaceholder, error }: Props) {
   const [value, setValue] = useState('')
   const [busy, setBusy] = useState(false)
+  // Every Send attempt shows the error again, even when the text is the same as last time.
+  const [attempt, setAttempt] = useState(0)
+  const [shownError, setShownError] = useState('')
+  useEffect(() => {
+    if (!error) { setShownError(''); return }
+    setShownError(error)
+    const timer = window.setTimeout(() => setShownError(''), 3000)
+    return () => window.clearTimeout(timer)
+  }, [error, attempt])
   const formRef = useRef<HTMLFormElement>(null)
   const titleId = useId()
   const descriptionId = useId()
@@ -50,7 +63,7 @@ export function ConfirmDialog({ title, description, confirmLabel, cancelLabel = 
   async function submit(event: FormEvent) {
     event.preventDefault()
     setBusy(true)
-    try { await onConfirm(value.trim()) } finally { setBusy(false) }
+    try { await onConfirm(value.trim()) } finally { setBusy(false); setAttempt(n => n + 1) }
   }
 
   return (
@@ -62,9 +75,10 @@ export function ConfirmDialog({ title, description, confirmLabel, cancelLabel = 
         {children}
         {inputLabel && (
           <label>{inputLabel}
-            <textarea value={value} onChange={event => setValue(event.target.value)} rows={3} required={inputRequired} />
+            <textarea value={value} onChange={event => setValue(event.target.value)} rows={3} required={inputRequired} placeholder={inputPlaceholder} />
           </label>
         )}
+        {shownError && <div key={`${shownError}-${attempt}`} className="form-error fade-out-3s" role="alert">{shownError}</div>}
         <div className="dialog-actions">
           {!hideCancel && <button type="button" className="ghost-button" onClick={onCancel} disabled={busy}>{cancelLabel}</button>}
           <button type="submit" className={danger ? 'danger-button' : 'admin-primary'} disabled={busy}>{busy ? 'Working…' : confirmLabel}</button>

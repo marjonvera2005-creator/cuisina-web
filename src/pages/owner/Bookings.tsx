@@ -13,6 +13,7 @@ import { db, errorMessage } from '../../lib/supabase'
 import type { BookingStatus } from '../../lib/types'
 import { EventMap } from '../../components/EventMap'
 import { useQuery } from '../../lib/useQuery'
+import { toast, useToastMessage } from '../../lib/toast'
 
 type CustomerInfo = {
   customer_id: string
@@ -179,7 +180,7 @@ export default function Bookings() {
   const [search, setSearch] = useState('')
   const [openId, setOpenId] = useState<string | null>(null)
   const [action, setAction] = useState<Action | null>(null)
-  const [problem, setProblem] = useState('')
+  const [problem, setProblem] = useToastMessage('error')
   const [suggest, setSuggest] = useState<BookingRow | null>(null)
   const [reporting, setReporting] = useState<{ booking: BookingRow; category?: ReportCategory } | null>(null)
   const [blocking, setBlocking] = useState<{ booking: BookingRow; block: boolean } | null>(null)
@@ -225,6 +226,7 @@ export default function Bookings() {
     })
     setAction(null)
     if (rpcError) setProblem(errorMessage(rpcError))
+    else toast(`${ACTION_LABELS[action.status]?.replace(/ booking$/, '') ?? 'Updated'}: done. The customer was notified.`)
     reload()
   }
 
@@ -238,6 +240,7 @@ export default function Bookings() {
     })
     setSuggest(null); setSuggestTotal('')
     if (rpcError) setProblem(errorMessage(rpcError))
+    else toast('Suggestion sent to the customer.')
     reload()
   }
 
@@ -252,6 +255,7 @@ export default function Bookings() {
     })
     setAnswering(null)
     if (rpcError) setProblem(errorMessage(rpcError))
+    else toast(answering.approve ? 'Changes approved. The booking is updated.' : 'Changes rejected. The customer sees your reason.')
     reload()
   }
 
@@ -265,6 +269,7 @@ export default function Bookings() {
       : await db().from('business_blocked_customers').delete().eq('business_id', data.business.id).eq('customer_id', booking.customer_id)
     setBlocking(null)
     if (blockError) setProblem(errorMessage(blockError))
+    else toast(block ? 'Customer blocked from your business.' : 'Customer unblocked.')
     reload()
   }
 

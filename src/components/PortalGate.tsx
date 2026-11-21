@@ -3,6 +3,7 @@ import type { FormEvent, ReactNode } from 'react'
 import { useAuth } from '../lib/auth'
 import type { Role } from '../lib/auth'
 import { errorMessage, isConfigured } from '../lib/supabase'
+import { toast } from '../lib/toast'
 import { CuisinaLoader, Logo, NotConfigured } from './Brand'
 
 const PASSWORD_HINT = 'At least 8 characters, with a symbol such as @'
@@ -65,6 +66,7 @@ export function PortalGate({ role, title, subtitle, allowSignUp, children }: Pro
         }
       } else {
         await auth.signIn(email, password)
+        toast('Signed in. Welcome back!')
       }
     } catch (err) {
       // Registered but never confirmed: ask for the code instead of a dead end.

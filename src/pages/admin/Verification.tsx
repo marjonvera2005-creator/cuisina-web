@@ -5,6 +5,7 @@ import { formatDate } from '../../lib/format'
 import { db, errorMessage } from '../../lib/supabase'
 import type { VerificationStatus } from '../../lib/types'
 import { useQuery } from '../../lib/useQuery'
+import { toast, useToastMessage } from '../../lib/toast'
 
 type BusinessRow = {
   id: string
@@ -37,7 +38,7 @@ export default function Verification() {
   const [filter, setFilter] = useState<'all' | VerificationStatus>('pending')
   const [open, setOpen] = useState<string | null>(null)
   const [decision, setDecision] = useState<Decision | null>(null)
-  const [problem, setProblem] = useState('')
+  const [problem, setProblem] = useToastMessage('error')
 
   async function decide(reason: string) {
     if (!decision) return
@@ -49,6 +50,7 @@ export default function Verification() {
     })
     setDecision(null)
     if (rpcError) setProblem(errorMessage(rpcError))
+    else toast('Decision saved. The caterer was notified.')
     reload()
   }
 

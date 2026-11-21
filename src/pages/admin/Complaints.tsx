@@ -6,6 +6,7 @@ import type { ReportCategory } from '../../components/ReportProblem'
 import { formatDate, formatTime } from '../../lib/format'
 import { db, errorMessage } from '../../lib/supabase'
 import { useQuery } from '../../lib/useQuery'
+import { toast, useToastMessage } from '../../lib/toast'
 
 type Status = 'open' | 'reviewing' | 'resolved' | 'dismissed'
 
@@ -56,7 +57,7 @@ export default function Complaints() {
   }, [])
   const [filter, setFilter] = useState<'all' | Status>('open')
   const [sender, setSender] = useState<Sender>('all')
-  const [problem, setProblem] = useState('')
+  const [problem, setProblem] = useToastMessage('error')
   const [replying, setReplying] = useState<Complaint | null>(null)
   const [nextStatus, setNextStatus] = useState<Status>('reviewing')
   const [reply, setReply] = useState('')
@@ -70,6 +71,7 @@ export default function Complaints() {
     const { error: rpcError } = await db().rpc('set_user_active', { p_user_id: account.id, p_active: account.active })
     setAccount(null)
     if (rpcError) setProblem(errorMessage(rpcError))
+    else toast('Account status updated.')
     reload()
   }
 
@@ -86,6 +88,7 @@ export default function Complaints() {
     const { error: rpcError } = await db().rpc('respond_to_complaint', { p_complaint_id: replying.id, p_status: nextStatus, p_reply: reply.trim() || null })
     setBusy(false)
     if (rpcError) { setProblem(errorMessage(rpcError)); return }
+    toast('Saved. The sender is notified.')
     setReplying(null)
     reload()
   }

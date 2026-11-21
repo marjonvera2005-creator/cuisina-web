@@ -5,6 +5,7 @@ import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-do
 import { useAuth } from '../lib/auth'
 import { db } from '../lib/supabase'
 import { LeafSprig, Logo, StackedLogo } from './Brand'
+import { toast } from '../lib/toast'
 
 /**
  * `group` puts consecutive items under one collapsible heading.
@@ -139,6 +140,7 @@ export function PortalLayout({ portalName, items, greeting = 'Here’s what’s 
 
   async function logout() {
     await auth.signOut()
+    toast('You are signed out.', 'info')
     navigate(portalName.startsWith('Admin') ? '/admin' : '/owner')
   }
 

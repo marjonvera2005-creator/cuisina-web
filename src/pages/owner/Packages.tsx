@@ -7,6 +7,7 @@ import { byPackageName, peso, safeFileName } from '../../lib/format'
 import { fetchMyBusiness } from '../../lib/owner'
 import { db, errorMessage, publicImageUrl } from '../../lib/supabase'
 import { useQuery } from '../../lib/useQuery'
+import { useToastMessage } from '../../lib/toast'
 
 type PackageRow = {
   id: string
@@ -60,8 +61,8 @@ export default function Packages() {
   }, [userId])
 
   const [draft, setDraft] = useState<Draft | null>(null)
-  const [problem, setProblem] = useState('')
-  const [notice, setNotice] = useState('')
+  const [problem, setProblem] = useToastMessage('error')
+  const [notice, setNotice] = useToastMessage('success')
   const [busy, setBusy] = useState(false)
   const [serviceInput, setServiceInput] = useState('')
 
@@ -482,7 +483,7 @@ export default function Packages() {
 function PaxOptions({ businessId, pax, onSaved }: { businessId: string; pax: number[]; onSaved: () => void }) {
   const [value, setValue] = useState('')
   const [busy, setBusy] = useState(false)
-  const [problem, setProblem] = useState('')
+  const [problem, setProblem] = useToastMessage('error')
 
   async function save(next: number[]) {
     setBusy(true); setProblem('')
