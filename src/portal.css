@@ -1305,3 +1305,10 @@ i.eb-fee { background: #d4a85a; }
 .cr-preview-hint { margin: 0; font-size: 12.5px; color: #8a8b80; }
 .rc-dot.new { background: #c98a1c; }
 @media (max-width: 900px) { .cr-explain { grid-template-columns: 1fr; } }
+
+/* Toasts: top center, sliding down from the top */
+.toaster { left: 50%; right: auto; transform: translateX(-50%); justify-items: center; }
+.toast { width: 100%; animation-name: toast-in-top; }
+.toast.leaving { animation-name: toast-out-top; }
+@keyframes toast-in-top { from { opacity: 0; transform: translateY(-16px) scale(.98); } to { opacity: 1; transform: none; } }
+@keyframes toast-out-top { to { opacity: 0; transform: translateY(-12px) scale(.98); } }
