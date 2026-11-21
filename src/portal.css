@@ -1165,3 +1165,15 @@ i.eb-fee { background: #d4a85a; }
 .chg-table thead th { font-size: 11.5px; text-transform: uppercase; letter-spacing: .05em; color: #6f7068; }
 .chg-table tbody th { width: 22%; color: #263d2b; font-weight: 600; }
 .chg-table tr.changed td:last-child { background: #fff4d9; font-weight: 600; color: #263d2b; }
+
+/* Complaints: status and sender filters on one line */
+.filter-line { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; }
+.filter-line > .filter-row { margin-bottom: 0; flex-wrap: nowrap; }
+.filter-divider { width: 1px; height: 28px; margin: 0 6px; background: #ddd6c4; }
+@media (max-width: 1100px) { .filter-line > .filter-row { flex-wrap: wrap; } .filter-divider { display: none; } }
+
+/* Business model: rate per caterer */
+.bm-rate-tag { display: inline-flex; align-items: baseline; gap: 6px; font-weight: 700; color: #263d2b; }
+.bm-rate-tag small { font-weight: 600; font-size: 11px; color: #6f7068; text-transform: uppercase; letter-spacing: .04em; }
+.bm-rate-tag.custom small { color: #8a5a00; }
+.bm-check { display: flex; align-items: center; gap: 8px; font-weight: 600; }

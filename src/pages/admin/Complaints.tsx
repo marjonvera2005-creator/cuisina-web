@@ -99,16 +99,20 @@ export default function Complaints() {
   return (
     <>
       <ErrorBanner message={error || problem} />
+      {/* Status and sender filters on one line, separated by a divider. */}
+      <div className="filter-line">
       <div className="filter-row">{(['all', ...STATUSES] as const).map(option => (
         <button key={option} className={filter === option ? 'active' : ''} onClick={() => setFilter(option)}>
           {option[0].toUpperCase() + option.slice(1)} <span className="count">{option === 'all' ? bySender.length : bySender.filter(item => item.status === option).length}</span>
         </button>
       ))}</div>
+      <span className="filter-divider" aria-hidden="true" />
       <div className="filter-row">{([['all', 'Everyone'], ['customer', 'From customers'], ['owner', 'From caterers']] as const).map(([value, label]) => (
         <button key={value} className={sender === value ? 'active' : ''} onClick={() => setSender(value)}>
           {label} <span className="count">{value === 'all' ? complaints.length : complaints.filter(item => (item.reporter_role ?? 'customer') === value).length}</span>
         </button>
       ))}</div>
+      </div>
 
       {visible.length === 0 ? <EmptyState title="No complaints">Nothing matches this filter.</EmptyState> : (
         <div className="booking-list">{visible.map(item => {

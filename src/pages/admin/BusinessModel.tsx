@@ -19,6 +19,9 @@ type Report = {
   by_month: { month: string; bookings: number; sales: number; commission: number }[]
 }
 
+/** A caterer and its own rate (migration 032); null = the platform rate. */
+type CatererRate = { id: string; business_name: string; verification_status: string; commission_rate: number | null }
+
 const monthLabel = (key: string) => new Date(`${key}-01T00:00:00`).toLocaleDateString(undefined, { month: 'long', year: 'numeric' })
 
 /** Business model: Cuisina's commission on completed bookings (migration 029). */
@@ -26,12 +29,20 @@ export default function BusinessModel() {
   const { data, loading, error, reload } = useQuery(async () => {
     const { data: report, error: reportError } = await db().rpc('admin_commission_report')
     if (reportError) throw reportError
-    return report as Report
+    // Each caterer's own rate. An error (migration 032 not run yet) hides the per-caterer table.
+    const { data: rateRows, error: rateError } = await db().from('catering_businesses')
+      .select('id,business_name,verification_status,commission_rate').order('business_name')
+    return { ...(report as Report), caterers: rateError ? null : (rateRows ?? []) as CatererRate[] }
   }, [])
   const [rate, setRate] = useState('')
   const [confirm, setConfirm] = useState<number | null>(null)
   const [formError, setFormError] = useState('')
   const [saved, setSaved] = useState('')
+  // Changing one caterer's rate: the caterer, the typed rate, and "use the platform rate".
+  const [editing, setEditing] = useState<CatererRate | null>(null)
+  const [catererRate, setCatererRate] = useState('')
+  const [useDefault, setUseDefault] = useState(false)
+  const [rateMessage, setRateMessage] = useState<{ ok: boolean; text: string } | null>(null)
 
   if (loading && !data) return <EmptyState title="Loading business model…" />
   if (error) {
@@ -58,6 +69,29 @@ export default function BusinessModel() {
     reload()
   }
 
+  function openRate(caterer: CatererRate) {
+    setEditing(caterer)
+    setUseDefault(caterer.commission_rate == null)
+    setCatererRate(caterer.commission_rate == null ? '' : String(Number(caterer.commission_rate)))
+    setRateMessage(null)
+  }
+
+  async function saveCatererRate() {
+    if (!editing) return
+    const value = useDefault ? null : Number(catererRate)
+    if (value != null && (!catererRate.trim() || !Number.isFinite(value) || value < 0 || value > 50)) {
+      setRateMessage({ ok: false, text: 'Enter a commission between 0 and 50 (%), or choose the default rate.' })
+      setEditing(null)
+      return
+    }
+    const { error: saveError } = await db().rpc('set_business_commission_rate', { p_business_id: editing.id, p_rate: value })
+    setRateMessage(saveError
+      ? { ok: false, text: errorMessage(saveError) }
+      : { ok: true, text: `${editing.business_name} now uses ${value == null ? `the default rate (${formatRate(current)})` : formatRate(value)} for new bookings.` })
+    setEditing(null)
+    reload()
+  }
+
   return (
     <>
       <div className="kpi-grid">
@@ -78,6 +112,29 @@ export default function BusinessModel() {
         {formError && <div className="form-error bm-msg" role="alert">{formError}</div>}
         {saved && <div className="form-notice bm-msg" role="status">{saved}</div>}
         <p className="sys-note">Each booking keeps the rate that applied when it was made, so a change only affects new bookings. Every change is recorded in the audit log.</p>
+      </div>
+
+      <div className="admin-card">
+        <div className="card-heading"><div><h2>Rate per caterer</h2><p className="eyebrow">Give a caterer its own commission. Others use the default rate ({formatRate(current)}).</p></div></div>
+        {rateMessage && <div className={`${rateMessage.ok ? 'form-notice' : 'form-error'} bm-msg`} role={rateMessage.ok ? 'status' : 'alert'}>{rateMessage.text}</div>}
+        {data.caterers == null ? (
+          <p className="sys-note">To set a rate per caterer, run <code>supabase/migrations/032_caterer_commission.sql</code> in the Supabase SQL Editor, then refresh this page.</p>
+        ) : data.caterers.length === 0 ? <EmptyState title="No caterers yet" /> : (
+          <div className="table-wrap"><table className="rich-table">
+            <thead><tr><th>Caterer</th><th>Status</th><th>Commission</th><th /></tr></thead>
+            <tbody>{data.caterers.map(caterer => (
+              <tr key={caterer.id}>
+                <td><div className="person"><Avatar name={caterer.business_name} /><div><strong>{caterer.business_name}</strong></div></div></td>
+                <td><span className={`status ${caterer.verification_status}`}>{caterer.verification_status}</span></td>
+                <td>{caterer.commission_rate == null
+                  ? <span className="bm-rate-tag">{formatRate(current)} <small>default</small></span>
+                  : <span className="bm-rate-tag custom">{formatRate(Number(caterer.commission_rate))} <small>custom</small></span>}</td>
+                <td><div className="row-actions"><button className="reject" onClick={() => openRate(caterer)}>Change</button></div></td>
+              </tr>
+            ))}</tbody>
+          </table></div>
+        )}
+        <p className="sys-note">A new rate applies to the caterer’s new bookings. Bookings already made keep their rate.</p>
       </div>
 
       <div className="admin-card">
@@ -110,6 +167,18 @@ export default function BusinessModel() {
         )}
       </div>
 
+      {editing && (
+        <ConfirmDialog title={`Commission for ${editing.business_name}`}
+          description={`Now: ${editing.commission_rate == null ? `default rate (${formatRate(current)})` : formatRate(Number(editing.commission_rate))}. The new rate applies to this caterer’s new bookings only.`}
+          confirmLabel="Save rate" onConfirm={saveCatererRate} onCancel={() => setEditing(null)}>
+          <label className="bm-check"><input type="checkbox" checked={useDefault} onChange={event => setUseDefault(event.target.checked)} /> Use the default rate ({formatRate(current)})</label>
+          {!useDefault && (
+            <label>Commission for this caterer (%)
+              <input type="number" min={0} max={50} step="0.5" value={catererRate} onChange={event => setCatererRate(event.target.value)} placeholder={String(current)} autoFocus />
+            </label>
+          )}
+        </ConfirmDialog>
+      )}
       {confirm != null && (
         <ConfirmDialog title={`Change the commission to ${formatRate(confirm)}?`}
           description={`From ${formatRate(current)} to ${formatRate(confirm)}. Bookings made from now on use the new rate; existing bookings keep theirs.`}
