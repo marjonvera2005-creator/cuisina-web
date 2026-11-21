@@ -44,7 +44,10 @@ export function clientFor(portal: Portal): SupabaseClient | null {
 
 /** The portal of the page being viewed: /admin/... is the administrator portal, everything else the caterer portal. */
 export function currentPortal(): Portal {
-  return window.location.pathname.startsWith('/admin') ? 'admin' : 'owner'
+  // The site may live in a folder (GitHub Pages: /cuisina-web/admin/...), so look at the path after it.
+  const base = import.meta.env.BASE_URL.replace(/\/$/, '')
+  const path = window.location.pathname.startsWith(base) ? window.location.pathname.slice(base.length) : window.location.pathname
+  return path.startsWith('/admin') ? 'admin' : 'owner'
 }
 
 /** Returns the current portal's client, or throws a readable error when the environment is not configured. */
