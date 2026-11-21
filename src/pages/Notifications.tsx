@@ -27,6 +27,7 @@ function targetFor(portal: 'owner' | 'admin', notice: Notice): string | null {
     case 'booking_request':
     case 'booking_status':
     case 'booking_proposal':
+    case 'booking_change':
       if (portal === 'admin') return '/admin/bookings'
       return bookingId ? `/owner/bookings?booking=${bookingId}` : '/owner/bookings'
     case 'business_verification':
