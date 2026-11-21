@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { ArrowBendUpLeft, CalendarBlank, ChatCircleText, MapPin, PencilSimple, Storefront, User } from '@phosphor-icons/react'
 import { EmptyState, ErrorBanner } from '../../components/Brand'
 import { ConfirmDialog } from '../../components/Dialog'
 import { CATEGORY_LABEL } from '../../components/ReportProblem'
@@ -35,6 +36,17 @@ type Complaint = {
 }
 
 const STATUSES: Status[] = ['open', 'reviewing', 'resolved', 'dismissed']
+
+/** What each status means, in plain words (card badge and the reply window). */
+const STATUS_INFO: Record<Status, { label: string; hint: string; tone: string }> = {
+  open: { label: 'New', hint: 'Needs your reply', tone: 'new' },
+  reviewing: { label: 'Reviewing', hint: 'You are looking into it', tone: 'reviewing' },
+  resolved: { label: 'Resolved', hint: 'The problem is fixed', tone: 'resolved' },
+  dismissed: { label: 'Dismissed', hint: 'No action needed', tone: 'dismissed' },
+}
+/** Choices in the reply window (a report is never set back to New). */
+const REPLY_STATUSES: Status[] = ['reviewing', 'resolved', 'dismissed']
+const initials = (name: string) => name.split(/\s+/).filter(Boolean).slice(0, 2).map(part => part[0]?.toUpperCase()).join('') || '?'
 type Sender = 'all' | 'customer' | 'owner'
 
 export default function Complaints() {
@@ -78,7 +90,7 @@ export default function Complaints() {
   function startReply(item: Complaint) {
     setReplying(item)
     setNextStatus(item.status === 'open' ? 'reviewing' : item.status)
-    setReply('')
+    setReply(item.admin_reply ?? '')
     setProblem('')
   }
 
@@ -106,7 +118,7 @@ export default function Complaints() {
       <div className="filter-line">
       <div className="filter-row">{(['all', ...STATUSES] as const).map(option => (
         <button key={option} className={filter === option ? 'active' : ''} onClick={() => setFilter(option)}>
-          {option[0].toUpperCase() + option.slice(1)} <span className="count">{option === 'all' ? bySender.length : bySender.filter(item => item.status === option).length}</span>
+          {option === 'all' ? 'All' : STATUS_INFO[option].label} <span className="count">{option === 'all' ? bySender.length : bySender.filter(item => item.status === option).length}</span>
         </button>
       ))}</div>
       <span className="filter-divider" aria-hidden="true" />
@@ -118,54 +130,68 @@ export default function Complaints() {
       </div>
 
       {visible.length === 0 ? <EmptyState title="No complaints">Nothing matches this filter.</EmptyState> : (
-        <div className="booking-list">{visible.map(item => {
+        <div className="rc-list">{visible.map(item => {
           const fromOwner = item.reporter_role === 'owner'
+          const name = item.reporter?.full_name || (fromOwner ? 'A caterer' : 'A customer')
           return (
-            <article key={item.id} className="admin-card booking-card report-card">
-              <div className="booking-main">
-                <div>
-                  <p className="report-tags">
-                    <span className={`report-role ${fromOwner ? 'owner' : 'customer'}`}>{fromOwner ? 'Caterer' : 'Customer'}</span>
-                    {item.category && <span className="report-category">{CATEGORY_LABEL[item.category] ?? item.category}</span>}
-                    <span className={`status ${item.status === 'resolved' ? 'approved' : item.status === 'dismissed' ? 'suspended' : 'pending'}`}>{item.status}</span>
+            <article key={item.id} className={`admin-card rc-card is-${STATUS_INFO[item.status].tone}`}>
+              <header className="rc-head">
+                <span className={`rc-avatar ${fromOwner ? 'owner' : 'customer'}`} aria-hidden="true">{initials(name)}</span>
+                <div className="rc-title">
+                  <p className="rc-meta">
+                    <span className={`rc-role ${fromOwner ? 'owner' : 'customer'}`}>{fromOwner ? 'Caterer' : 'Customer'}</span>
+                    {item.category && <span className="rc-category">{CATEGORY_LABEL[item.category] ?? item.category}</span>}
                   </p>
                   <h3>{item.subject}</h3>
-                  <p className="muted-note">
-                    From <strong>{item.reporter?.full_name || (fromOwner ? 'a caterer' : 'a customer')}</strong>
-                    {item.reporter?.phone ? ` (${item.reporter.phone})` : ''}
-                    {' · '}{formatDate(item.created_at)}
+                  <p className="rc-from">
+                    From <strong>{name}</strong>{item.reporter?.phone ? <> · <a href={`tel:${item.reporter.phone}`}>{item.reporter.phone}</a></> : null} · {formatDate(item.created_at)}
                   </p>
                 </div>
-                <button className="approve" onClick={() => startReply(item)}>{item.admin_reply ? 'Update / reply' : 'Reply'}</button>
-              </div>
+                <div className="rc-side">
+                  <span className={`rc-status ${STATUS_INFO[item.status].tone}`}>
+                    <i aria-hidden="true" />{STATUS_INFO[item.status].label}<small>{STATUS_INFO[item.status].hint}</small>
+                  </span>
+                  <button type="button" className="rc-reply-button" onClick={() => startReply(item)}>
+                    {item.admin_reply ? <PencilSimple size={16} weight="bold" /> : <ArrowBendUpLeft size={16} weight="bold" />}
+                    {item.admin_reply ? 'Update reply' : 'Reply'}
+                  </button>
+                </div>
+              </header>
 
-              <dl className="report-facts">
-                <div><dt>Caterer</dt><dd>{item.business?.business_name ?? '—'}</dd></div>
+              <section className="rc-message">
+                <h4><ChatCircleText size={15} weight="bold" aria-hidden="true" /> What happened</h4>
+                <blockquote>{item.description}</blockquote>
+              </section>
+
+              <dl className="rc-facts">
+                <div><dt><Storefront size={14} aria-hidden="true" /> Caterer</dt><dd>{item.business?.business_name ?? '—'}</dd></div>
                 {item.booking ? <>
-                  <div><dt>Booking</dt><dd>{formatDate(item.booking.event_date)}, {formatTime(item.booking.event_time)} · {item.booking.package?.name ?? 'Package'} · <span className="status-text">{item.booking.status.replace('_', ' ')}</span></dd></div>
-                  <div><dt>Customer</dt><dd>{item.booking.customer?.full_name ?? '—'}</dd></div>
-                  <div><dt>Event place</dt><dd>{item.booking.location}</dd></div>
-                </> : <div><dt>Booking</dt><dd>Not about a specific booking</dd></div>}
-                {item.about_customer_id && accounts[item.about_customer_id] && (() => {
-                  const person = accounts[item.about_customer_id]
-                  return (
-                    <div><dt>Customer account</dt><dd className="account-action">
-                      <span className={`status ${person.is_active ? 'approved' : 'suspended'}`}>{person.is_active ? 'Active' : 'Deactivated'}</span>
-                      {person.is_active
-                        ? <button className="reject danger-text" onClick={() => setAccount({ id: item.about_customer_id!, name: person.full_name || 'this customer', active: false })}>Deactivate customer</button>
-                        : <button className="approve" onClick={() => setAccount({ id: item.about_customer_id!, name: person.full_name || 'this customer', active: true })}>Reactivate customer</button>}
-                    </dd></div>
-                  )
-                })()}
+                  <div><dt><CalendarBlank size={14} aria-hidden="true" /> Booking</dt><dd>{formatDate(item.booking.event_date)}, {formatTime(item.booking.event_time)}<small>{item.booking.package?.name ?? 'Package'} · {item.booking.status.replace('_', ' ')}</small></dd></div>
+                  <div><dt><User size={14} aria-hidden="true" /> Customer</dt><dd>{item.booking.customer?.full_name ?? '—'}</dd></div>
+                  <div><dt><MapPin size={14} aria-hidden="true" /> Event place</dt><dd>{item.booking.location}</dd></div>
+                </> : <div><dt><CalendarBlank size={14} aria-hidden="true" /> Booking</dt><dd>Not about a specific booking</dd></div>}
               </dl>
 
-              <p className="booking-note">{item.description}</p>
-              {item.admin_reply && (
-                <div className="report-reply">
-                  <strong>Your reply{item.replied_at ? ` · ${formatDate(item.replied_at)}` : ''}</strong>
+              {item.about_customer_id && accounts[item.about_customer_id] && (() => {
+                const person = accounts[item.about_customer_id]
+                return (
+                  <div className="rc-account">
+                    <span>The caterer asks to deactivate <strong>{person.full_name || 'this customer'}</strong>. Account now: <span className={`status ${person.is_active ? 'approved' : 'suspended'}`}>{person.is_active ? 'Active' : 'Deactivated'}</span></span>
+                    {person.is_active
+                      ? <button className="reject danger-text" onClick={() => setAccount({ id: item.about_customer_id!, name: person.full_name || 'this customer', active: false })}>Deactivate customer</button>
+                      : <button className="approve" onClick={() => setAccount({ id: item.about_customer_id!, name: person.full_name || 'this customer', active: true })}>Reactivate customer</button>}
+                  </div>
+                )
+              })()}
+
+              {item.admin_reply ? (
+                <section className="rc-answer">
+                  <h4><ArrowBendUpLeft size={15} weight="bold" aria-hidden="true" /> Your reply{item.replied_at ? <small> · {formatDate(item.replied_at)}</small> : null}</h4>
                   <p>{item.admin_reply}</p>
-                </div>
-              )}
+                </section>
+              ) : item.status === 'open' ? (
+                <p className="rc-waiting">No reply yet. {name} is waiting for an answer.</p>
+              ) : null}
             </article>
           )
         })}</div>
@@ -186,20 +212,25 @@ export default function Complaints() {
       {replying && (
         <div className="dialog-backdrop" role="presentation" onMouseDown={event => { if (event.target === event.currentTarget && !busy) setReplying(null) }}>
           <form className="dialog" role="dialog" aria-modal="true" aria-label="Reply to report" onSubmit={event => { event.preventDefault(); void send() }}>
-            <h2>Reply to {replying.reporter_role === 'owner' ? 'caterer' : 'customer'}</h2>
-            <p>{replying.subject}</p>
-            <label>Status
-              <select value={nextStatus} onChange={event => setNextStatus(event.target.value as Status)}>
-                {STATUSES.map(status => <option key={status} value={status}>{status[0].toUpperCase() + status.slice(1)}</option>)}
-              </select>
-            </label>
-            <label>Message to {replying.reporter?.full_name || 'the sender'} <small>(optional; sent as a notification)</small>
+            <h2>Reply to {replying.reporter?.full_name || (replying.reporter_role === 'owner' ? 'the caterer' : 'the customer')}</h2>
+            <p className="rc-dialog-subject">“{replying.subject}”</p>
+            <fieldset className="rc-choices">
+              <legend>Set the status</legend>
+              {REPLY_STATUSES.map(status => (
+                <label key={status} className={`rc-choice ${nextStatus === status ? 'selected' : ''}`}>
+                  <input type="radio" name="report-status" value={status} checked={nextStatus === status} onChange={() => setNextStatus(status)} />
+                  <span className={`rc-dot ${STATUS_INFO[status].tone}`} aria-hidden="true" />
+                  <span><strong>{STATUS_INFO[status].label}</strong><small>{STATUS_INFO[status].hint}</small></span>
+                </label>
+              ))}
+            </fieldset>
+            <label>Your message <small>(optional · they get it as a notification)</small>
               <textarea rows={4} value={reply} onChange={event => setReply(event.target.value)} maxLength={2000}
                 placeholder="e.g. We contacted the caterer. Your deposit will be refunded within 3 days." />
             </label>
             <div className="dialog-actions">
               <button type="button" className="ghost-button" onClick={() => setReplying(null)} disabled={busy}>Cancel</button>
-              <button type="submit" className="admin-primary" disabled={busy}>{busy ? 'Sending…' : 'Save and notify'}</button>
+              <button type="submit" className="admin-primary" disabled={busy}>{busy ? 'Sending…' : 'Send reply'}</button>
             </div>
           </form>
         </div>
