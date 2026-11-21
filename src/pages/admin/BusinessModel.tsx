@@ -1,4 +1,4 @@
-import { CalendarCheck, Coins, Percent, Storefront } from '@phosphor-icons/react'
+import { CalendarCheck, Coins, PencilSimple, Percent, Storefront } from '@phosphor-icons/react'
 import { useState } from 'react'
 import type { FormEvent } from 'react'
 import { EmptyState, ErrorBanner } from '../../components/Brand'
@@ -22,6 +22,19 @@ type Report = {
 
 /** A caterer and its own rate (migration 032); null = the platform rate. */
 type CatererRate = { id: string; business_name: string; verification_status: string; commission_rate: number | null }
+
+/** Example booking used to show what a rate means in pesos. */
+const EXAMPLE = 10000
+
+/** Cuisina's share and the caterer's share of a booking, as one bar. */
+function SplitBar({ rate }: { rate: number }) {
+  return (
+    <div className="cr-split" role="img" aria-label={`Cuisina ${formatRate(rate)}, caterer ${formatRate(100 - rate)}`}>
+      <span className="cr-split-bar"><i style={{ width: `${Math.max(rate, 1.5)}%` }} /></span>
+      <span className="cr-split-labels"><span>Cuisina {formatRate(rate)}</span><span>Caterer {formatRate(100 - rate)}</span></span>
+    </div>
+  )
+}
 
 const monthLabel = (key: string) => new Date(`${key}-01T00:00:00`).toLocaleDateString(undefined, { month: 'long', year: 'numeric' })
 
@@ -113,25 +126,44 @@ export default function BusinessModel() {
       </div>
 
       <div className="admin-card">
-        <div className="card-heading"><div><h2>Rate per caterer</h2><p className="eyebrow">Give a caterer its own commission. Others use the default rate ({formatRate(current)}).</p></div></div>
+        <div className="card-heading"><div><h2>Rate per caterer</h2><p className="eyebrow">How much Cuisina keeps from each caterer’s completed bookings</p></div></div>
+        {/* How it works, with an example anyone can follow. */}
+        <div className="cr-explain">
+          <div>
+            <strong>How it works</strong>
+            <p>Customers always pay the same price. When an event is completed, Cuisina keeps a percentage and the caterer receives the rest.
+              Every caterer uses the <b>standard rate ({formatRate(current)})</b> unless you give them a <b>special rate</b>.</p>
+          </div>
+          <div className="cr-example" aria-label={`Example: a ₱${EXAMPLE.toLocaleString()} booking at ${formatRate(current)}`}>
+            <span>Example: a {peso(EXAMPLE)} booking at {formatRate(current)}</span>
+            <SplitBar rate={current} />
+            <span className="cr-example-amounts"><b>Cuisina {peso(EXAMPLE * current / 100)}</b><b>Caterer {peso(EXAMPLE * (100 - current) / 100)}</b></span>
+          </div>
+        </div>
         {data.caterers == null ? (
           <p className="sys-note">To set a rate per caterer, run <code>supabase/migrations/032_caterer_commission.sql</code> in the Supabase SQL Editor, then refresh this page.</p>
         ) : data.caterers.length === 0 ? <EmptyState title="No caterers yet" /> : (
-          <div className="table-wrap"><table className="rich-table">
-            <thead><tr><th>Caterer</th><th>Status</th><th>Commission</th><th /></tr></thead>
-            <tbody>{data.caterers.map(caterer => (
-              <tr key={caterer.id}>
-                <td><div className="person"><Avatar name={caterer.business_name} /><div><strong>{caterer.business_name}</strong></div></div></td>
-                <td><span className={`status ${caterer.verification_status}`}>{caterer.verification_status}</span></td>
-                <td>{caterer.commission_rate == null
-                  ? <span className="bm-rate-tag">{formatRate(current)} <small>default</small></span>
-                  : <span className="bm-rate-tag custom">{formatRate(Number(caterer.commission_rate))} <small>custom</small></span>}</td>
-                <td><div className="row-actions"><button className="reject" onClick={() => openRate(caterer)}>Change</button></div></td>
-              </tr>
-            ))}</tbody>
+          <div className="table-wrap"><table className="rich-table cr-table">
+            <thead><tr><th>Caterer</th><th>Rate</th><th>Split of each booking</th><th>From a {peso(EXAMPLE)} booking</th><th /></tr></thead>
+            <tbody>{data.caterers.map(caterer => {
+              const special = caterer.commission_rate != null
+              const rate = special ? Number(caterer.commission_rate) : current
+              return (
+                <tr key={caterer.id}>
+                  <td><div className="person"><Avatar name={caterer.business_name} /><div><strong>{caterer.business_name}</strong>
+                    <small className={`cr-verify ${caterer.verification_status}`}>{caterer.verification_status === 'approved' ? 'Approved caterer' : `${caterer.verification_status[0].toUpperCase()}${caterer.verification_status.slice(1)} verification`}</small></div></div></td>
+                  <td>{special
+                    ? <span className="cr-badge special"><b>{formatRate(rate)}</b> Special rate</span>
+                    : <span className="cr-badge"><b>{formatRate(rate)}</b> Standard rate</span>}</td>
+                  <td><SplitBar rate={rate} /></td>
+                  <td className="cr-amounts"><span>Cuisina <b>{peso(EXAMPLE * rate / 100)}</b></span><span>Caterer <b>{peso(EXAMPLE * (100 - rate) / 100)}</b></span></td>
+                  <td><button type="button" className="cr-change" onClick={() => openRate(caterer)}><PencilSimple size={15} weight="bold" /> Change rate</button></td>
+                </tr>
+              )
+            })}</tbody>
           </table></div>
         )}
-        <p className="sys-note">A new rate applies to the caterer’s new bookings. Bookings already made keep their rate.</p>
+        <p className="sys-note">A new rate counts for the caterer’s new bookings only. Bookings already made keep the rate they were made with, so agreed prices never change.</p>
       </div>
 
       <div className="admin-card">
@@ -165,15 +197,38 @@ export default function BusinessModel() {
       </div>
 
       {editing && (
-        <ConfirmDialog title={`Commission for ${editing.business_name}`}
-          description={`Now: ${editing.commission_rate == null ? `default rate (${formatRate(current)})` : formatRate(Number(editing.commission_rate))}. The new rate applies to this caterer’s new bookings only.`}
+        <ConfirmDialog title={`Rate for ${editing.business_name}`}
+          description={`Now: ${editing.commission_rate == null ? `standard rate (${formatRate(current)})` : `special rate (${formatRate(Number(editing.commission_rate))})`}. The new rate counts for this caterer’s new bookings only.`}
           confirmLabel="Save rate" onConfirm={saveCatererRate} onCancel={() => setEditing(null)}>
-          <label className="bm-check"><input type="checkbox" checked={useDefault} onChange={event => setUseDefault(event.target.checked)} /> Use the default rate ({formatRate(current)})</label>
+          <fieldset className="rc-choices">
+            <legend>Which rate?</legend>
+            <label className={`rc-choice ${useDefault ? 'selected' : ''}`}>
+              <input type="radio" name="rate-kind" checked={useDefault} onChange={() => setUseDefault(true)} />
+              <span className="rc-dot resolved" aria-hidden="true" />
+              <span><strong>Standard rate ({formatRate(current)})</strong><small>Same as all other caterers. Follows the rate above if you change it.</small></span>
+            </label>
+            <label className={`rc-choice ${!useDefault ? 'selected' : ''}`}>
+              <input type="radio" name="rate-kind" checked={!useDefault} onChange={() => setUseDefault(false)} />
+              <span className="rc-dot new" aria-hidden="true" />
+              <span><strong>Special rate</strong><small>Only for {editing.business_name}, e.g. a lower rate for a new partner.</small></span>
+            </label>
+          </fieldset>
           {!useDefault && (
-            <label>Commission for this caterer (%)
-              <input type="number" min={0} max={50} step="0.5" value={catererRate} onChange={event => setCatererRate(event.target.value)} placeholder={String(current)} autoFocus />
+            <label>Special rate for this caterer (%)
+              <input type="number" min={0} max={50} step="0.5" value={catererRate} onChange={event => setCatererRate(event.target.value)} placeholder={`0 to 50, e.g. ${Math.max(0, current - 2)}`} autoFocus />
             </label>
           )}
+          {(() => {
+            const preview = useDefault ? current : Number(catererRate)
+            if (!useDefault && (!catererRate.trim() || !Number.isFinite(preview) || preview < 0 || preview > 50)) return <p className="cr-preview-hint">Type a rate from 0 to 50 to see the split.</p>
+            return (
+              <div className="cr-preview">
+                <span>On a {peso(EXAMPLE)} booking:</span>
+                <SplitBar rate={preview} />
+                <span className="cr-example-amounts"><b>Cuisina {peso(EXAMPLE * preview / 100)}</b><b>Caterer {peso(EXAMPLE * (100 - preview) / 100)}</b></span>
+              </div>
+            )
+          })()}
         </ConfirmDialog>
       )}
       {confirm != null && (
