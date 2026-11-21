@@ -1,5 +1,6 @@
 import { CalendarBlank, SealCheck, Storefront, Users } from '@phosphor-icons/react'
 import { Link } from 'react-router-dom'
+import { AppQrCard } from '../../components/AppQrCard'
 import { EmptyState, ErrorBanner } from '../../components/Brand'
 import { CaterersMap } from '../../components/CaterersMap'
 import { Avatar, DonutChart, LineChart, StatCard } from '../../components/Charts'
@@ -97,6 +98,8 @@ export default function Overview() {
           </table></div>
         )}
       </div>
+
+      <AppQrCard />
     </>
   )
 }

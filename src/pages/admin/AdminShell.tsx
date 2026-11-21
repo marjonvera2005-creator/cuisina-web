@@ -1,4 +1,4 @@
-import { Bell, CalendarCheck, ChartBar, ClockCounterClockwise, Coins, Cpu, Flag, TextAa, Gear, SealCheck, SquaresFour, Tag, Users } from '@phosphor-icons/react'
+import { Bell, CalendarCheck, ChartBar, ClockCounterClockwise, Coins, Flag, TextAa, Gear, SealCheck, SquaresFour, Tag, Users } from '@phosphor-icons/react'
 import { PortalGate } from '../../components/PortalGate'
 import { PortalLayout } from '../../components/PortalLayout'
 import type { NavItem } from '../../components/PortalLayout'
@@ -37,7 +37,6 @@ function AdminNav() {
     { to: '/admin/categories', label: 'Event categories', icon: <Tag size={18} />, group: 'Platform settings', groupIcon: <Gear size={18} /> },
     { to: '/admin/business-model', label: 'Business model', icon: <Coins size={18} />, group: 'Platform settings' },
     { to: '/admin/audit', label: 'Audit log', icon: <ClockCounterClockwise size={18} />, group: 'Platform settings' },
-    { to: '/admin/system', label: 'System & workers', icon: <Cpu size={18} />, group: 'Platform settings' },
     { to: '/admin/display', label: 'Accessibility & display', icon: <TextAa size={18} /> },
     // Reached from the bell in the header.
     { to: '/admin/notifications', label: 'Notifications', icon: <Bell size={18} />, hidden: true },

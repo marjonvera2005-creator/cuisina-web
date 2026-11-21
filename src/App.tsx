@@ -25,7 +25,6 @@ import Users from './pages/admin/Users'
 import Complaints from './pages/admin/Complaints'
 import Categories from './pages/admin/Categories'
 import AuditLog from './pages/admin/AuditLog'
-import SystemWorkers from './pages/admin/SystemWorkers'
 import BusinessModel from './pages/admin/BusinessModel'
 import Reports from './pages/admin/Reports'
 import OwnerReports from './pages/owner/Reports'
@@ -72,7 +71,6 @@ export default function App() {
             <Route path="complaints" element={<Complaints />} />
             <Route path="categories" element={<Categories />} />
             <Route path="audit" element={<AuditLog />} />
-            <Route path="system" element={<SystemWorkers />} />
             <Route path="business-model" element={<BusinessModel />} />
             <Route path="reports" element={<Reports />} />
             <Route path="display" element={<DisplaySettingsPage />} />
