@@ -1,0 +1,73 @@
+/* Transitions for the whole web portal (owner + admin). Loaded last so it can add motion on top of the other styles. */
+
+:root {
+  --ease-out: cubic-bezier(.22, 1, .36, 1);
+  --t-fast: .15s;
+  --t-med: .28s;
+}
+
+@keyframes fade-up { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+@keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes pop-in { from { opacity: 0; transform: translateY(8px) scale(.97); } to { opacity: 1; transform: none; } }
+@keyframes drop-in { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: none; } }
+
+/* 1. Page change: the content fades and slides up a little. Cards come in one after another. */
+.page-enter { animation: fade-up var(--t-med) var(--ease-out) both; }
+.page-enter > * { animation: fade-up .38s var(--ease-out) both; }
+.page-enter > *:nth-child(2) { animation-delay: .05s; }
+.page-enter > *:nth-child(3) { animation-delay: .1s; }
+.page-enter > *:nth-child(4) { animation-delay: .15s; }
+.page-enter > *:nth-child(n+5) { animation-delay: .2s; }
+.page-enter .kpi-grid > * { animation: fade-up .4s var(--ease-out) both; }
+.page-enter .kpi-grid > *:nth-child(2) { animation-delay: .06s; }
+.page-enter .kpi-grid > *:nth-child(3) { animation-delay: .12s; }
+.page-enter .kpi-grid > *:nth-child(4) { animation-delay: .18s; }
+
+/* 2. Login / register page. */
+.auth-panel { animation: pop-in .45s var(--ease-out) both; }
+
+/* 3. Buttons: smooth color change on hover, small press when clicked. */
+.admin-primary, .ghost-button, .danger-button, .link-button, .file-button,
+.approve, .reject, .filter-row button, .toolbar button, .row-actions button {
+  transition: background-color var(--t-fast), color var(--t-fast), border-color var(--t-fast),
+              box-shadow var(--t-fast), transform var(--t-fast), opacity var(--t-fast);
+}
+.admin-primary:not(:disabled):hover { box-shadow: 0 6px 16px -8px rgba(29,49,35,.55); transform: translateY(-1px); }
+.ghost-button:not(:disabled):hover { border-color: #c9bfa5; background: #faf6ec; }
+:is(.admin-primary, .ghost-button, .danger-button, .approve, .reject, .file-button):not(:disabled):active { transform: translateY(0) scale(.97); }
+
+/* 4. Inputs: soft glow when focused. */
+.admin-content :is(input, select, textarea), .auth-panel :is(input, select, textarea), .dialog :is(input, textarea) {
+  transition: border-color var(--t-fast), box-shadow var(--t-fast);
+}
+.admin-content :is(input, select, textarea):focus, .auth-panel :is(input, select, textarea):focus, .dialog :is(input, textarea):focus {
+  box-shadow: 0 0 0 3px rgba(120,160,95,.22);
+}
+
+/* 5. Cards lift a little on hover; table rows highlight smoothly. */
+.admin-card { transition: box-shadow var(--t-med) var(--ease-out), transform var(--t-med) var(--ease-out); }
+.kpi-card { transition: box-shadow var(--t-med) var(--ease-out), transform var(--t-med) var(--ease-out); }
+.kpi-card:hover { transform: translateY(-3px); box-shadow: 0 1px 2px rgba(38,61,43,.05), 0 18px 34px -16px rgba(38,61,43,.24); }
+.admin-content tbody tr { transition: background-color var(--t-fast); }
+.admin-content tbody tr:hover { background-color: #faf6ec; }
+
+/* 6. Pop-ups: dark background fades in, the box pops in. */
+.dialog-backdrop { animation: fade-in .2s ease both; }
+.dialog { animation: pop-in .28s var(--ease-out) both; }
+
+/* 7. Profile menu drops down; sidebar links slide smoothly. */
+.user-dropdown { animation: drop-in .18s var(--ease-out) both; transform-origin: top right; }
+.admin-sidebar nav a { transition: background-color var(--t-fast), color var(--t-fast); }
+.bell { transition: transform var(--t-fast); }
+.bell:hover { transform: rotate(-12deg); }
+
+/* 8. Error and notice messages fade in when they appear. */
+.form-error, .form-notice, .admin-error { animation: fade-in .25s ease both; }
+
+/* People who turn off motion in their device settings get no animation. */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: .01ms !important; animation-delay: 0s !important; transition-duration: .01ms !important; }
+}
+
+/* "Loading…" only shows if loading takes longer than about half a second, so quick loads don't flash it. */
+.empty-state.is-loading, .page-enter > .empty-state.is-loading { animation: fade-in .2s ease .45s both; }
