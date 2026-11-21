@@ -1312,3 +1312,15 @@ i.eb-fee { background: #d4a85a; }
 .toast.leaving { animation-name: toast-out-top; }
 @keyframes toast-in-top { from { opacity: 0; transform: translateY(-16px) scale(.98); } to { opacity: 1; transform: none; } }
 @keyframes toast-out-top { to { opacity: 0; transform: translateY(-12px) scale(.98); } }
+
+/* Toasts: solid, high-contrast colors so they stand out on the cream pages */
+.toaster { top: 22px; width: min(460px, calc(100vw - 32px)); }
+.toast { padding: 15px 14px 17px 16px; border: 0; border-radius: 14px; font-size: 15px; font-weight: 600; color: #fff; background: #1f5a33; box-shadow: 0 18px 40px rgba(20,35,24,.35), 0 0 0 1px rgba(255,255,255,.06) inset; }
+.toast.success { background: #1f5a33; }
+.toast.error { background: #a42f2f; }
+.toast.info { background: #263d2b; }
+.toast.success > svg, .toast.error > svg, .toast.info > svg { color: #fff; }
+.toast > svg { width: 22px; height: 22px; }
+.toast button { color: rgba(255,255,255,.8); }
+.toast button:hover { background: rgba(255,255,255,.16); color: #fff; }
+.toast .toast-timer, .toast.success .toast-timer, .toast.error .toast-timer, .toast.info .toast-timer { background: rgba(255,255,255,.55); }
