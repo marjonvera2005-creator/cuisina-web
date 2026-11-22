@@ -66,29 +66,124 @@ type BookingSnapshot = {
 /** A customer's request to change an accepted booking. */
 type ChangeRequest = { id: string; booking_id: string; note: string | null; current_booking: BookingSnapshot; requested: BookingSnapshot; created_at: string }
 
-/** Old vs new, row by row; changed rows are highlighted. */
+/** One dish, add-on or styling line. `key` says what it is; `text` is how it is shown. */
+type Line = { key: string; text: string }
+type LineDiff = { added: Line[]; removed: Line[]; changed: { from: Line; to: Line }[] }
+
+/** Compares two lists: what was added, removed, or kept with a different price or quantity. */
+function diffLines(before: Line[], after: Line[]): LineDiff {
+  // Exact matches first, so a repeated item is never paired with the wrong line.
+  const left = [...before]
+  const unmatched = after.filter(line => {
+    const at = left.findIndex(old => old.key === line.key && old.text === line.text)
+    if (at >= 0) left.splice(at, 1)
+    return at < 0
+  })
+  const diff: LineDiff = { added: [], removed: [], changed: [] }
+  for (const line of unmatched) {
+    const at = left.findIndex(old => old.key === line.key)
+    if (at >= 0) diff.changed.push({ from: left.splice(at, 1)[0], to: line })
+    else diff.added.push(line)
+  }
+  diff.removed = left
+  return diff
+}
+
+const menuLines = (snap: BookingSnapshot): Line[] =>
+  snap.menu_selection.flatMap(course => course.dishes.map(dish => ({ key: `${course.course}|${dish}`, text: `${course.course}: ${dish}` })))
+const addonLines = (snap: BookingSnapshot): Line[] => snap.addons.map(addon => ({ key: addon.name, text: `${addon.name} (${peso(addon.amount)})` }))
+
+/** A list inside the full comparison: removed lines crossed out, new lines in green. */
+function MarkedLines({ lines, marked, kind, empty }: { lines: Line[]; marked: Line[]; kind: 'added' | 'removed'; empty: string }) {
+  if (lines.length === 0) return <>{empty}</>
+  return <>{lines.map((line, index) => {
+    const isMarked = marked.includes(line)
+    return <span key={`${line.key}-${index}`} className={isMarked ? `chg-line ${kind}` : 'chg-line'}>{isMarked && <b aria-hidden="true">{kind === 'added' ? '+' : '−'}</b>}{line.text}</span>
+  })}</>
+}
+
+/** What the customer wants to change: a summary first, then the full booking side by side. */
 function ChangeRequestView({ request, customer }: { request: ChangeRequest; customer: string }) {
+  const [full, setFull] = useState(false)
   const before = request.current_booking, after = request.requested
-  const menu = (snap: BookingSnapshot) => snap.menu_selection.map(course => `${course.course}: ${course.dishes.join(', ')}`).join('\n') || '—'
-  const addons = (snap: BookingSnapshot) => snap.addons.map(addon => `${addon.name} (${peso(addon.amount)})`).join('\n') || 'None'
-  const rows: [string, string, string][] = [
+  const lists = [
+    { label: 'Menu', before: menuLines(before), after: menuLines(after), empty: '—' },
+    { label: 'Add-ons & styling', before: addonLines(before), after: addonLines(after), empty: 'None' },
+  ].map(list => ({ ...list, diff: diffLines(list.before, list.after) }))
+  const plain: [string, string, string][] = [
     ['Package', before.package_name ?? '—', after.package_name ?? '—'],
     ['Guests', String(before.guest_count), String(after.guest_count)],
-    ['Menu', menu(before), menu(after)],
-    ['Add-ons & styling', addons(before), addons(after)],
     ['Notes', before.requirements || '—', after.requirements || '—'],
-    ['Total', peso(before.total), peso(after.total)],
   ]
+  const changedPlain = plain.filter(([, now, next]) => now !== next)
+  const added = lists.flatMap(list => list.diff.added)
+  const removed = lists.flatMap(list => list.diff.removed)
+  const changed = lists.flatMap(list => list.diff.changed)
+  const difference = Number(after.total) - Number(before.total)
+  const group = (title: string, kind: string, sign: string, items: Line[]) => items.length > 0 && (
+    <div className={`chg-group ${kind}`}>
+      <h5><b aria-hidden="true">{sign}</b> {title} <span>{items.length}</span></h5>
+      <ul>{items.map((line, index) => <li key={`${line.key}-${index}`}>{line.text}</li>)}</ul>
+    </div>
+  )
+  const plainRow = ([label, now, next]: [string, string, string]) => (
+    <tr key={label} className={now !== next ? 'changed' : undefined}><th>{label}</th><td>{now}</td><td>{next}</td></tr>
+  )
   return (
     <section className="bk-callout chg-request">
       <h4>{customer} asks to change this booking <span className="status pending">Waiting for you</span></h4>
       {request.note && <p className="bk-text">“{request.note}”</p>}
-      <table className="chg-table">
-        <thead><tr><th /><th>Now</th><th>Requested</th></tr></thead>
-        <tbody>{rows.map(([label, now, next]) => (
-          <tr key={label} className={now !== next ? 'changed' : undefined}><th>{label}</th><td>{now}</td><td>{next}</td></tr>
-        ))}</tbody>
-      </table>
+
+      <div className="chg-summary">
+        <div className="chg-total">
+          <span>Total</span>
+          <strong><s>{peso(before.total)}</s> <i aria-hidden="true">→</i><span className="sr-only"> becomes </span> {peso(after.total)}</strong>
+          <em className={difference > 0 ? 'up' : difference < 0 ? 'down' : ''}>
+            {difference === 0 ? 'Same price' : `${difference > 0 ? '+' : '−'}${peso(Math.abs(difference))}`}
+          </em>
+        </div>
+        <div className="chg-groups">
+          {changedPlain.length > 0 && (
+            <div className="chg-group edited">
+              <h5><b aria-hidden="true">✎</b> Changed details <span>{changedPlain.length}</span></h5>
+              <ul>{changedPlain.map(([label, now, next]) => <li key={label}><strong>{label}:</strong> <s>{now}</s> → {next}</li>)}</ul>
+            </div>
+          )}
+          {group('Added', 'added', '+', added)}
+          {group('Removed', 'removed', '−', removed)}
+          {changed.length > 0 && (
+            <div className="chg-group edited">
+              <h5><b aria-hidden="true">✎</b> New price or quantity <span>{changed.length}</span></h5>
+              <ul>{changed.map(({ from, to }, index) => <li key={`${to.key}-${index}`}><s>{from.text}</s> → {to.text}</li>)}</ul>
+            </div>
+          )}
+        </div>
+      </div>
+
+      <button type="button" className="chg-toggle" aria-expanded={full} onClick={() => setFull(value => !value)}>
+        {full ? 'Hide full comparison' : 'Show full comparison'}
+      </button>
+      {full && (
+        <table className="chg-table">
+          <thead><tr><th /><th>Now</th><th>Requested</th></tr></thead>
+          <tbody>
+            {plain.slice(0, 2).map(plainRow)}
+            {lists.map(list => {
+              const { diff } = list
+              const isChanged = diff.added.length + diff.removed.length + diff.changed.length > 0
+              return (
+                <tr key={list.label} className={isChanged ? 'changed' : undefined}>
+                  <th>{list.label}</th>
+                  <td><MarkedLines lines={list.before} marked={[...diff.removed, ...diff.changed.map(c => c.from)]} kind="removed" empty={list.empty} /></td>
+                  <td><MarkedLines lines={list.after} marked={[...diff.added, ...diff.changed.map(c => c.to)]} kind="added" empty={list.empty} /></td>
+                </tr>
+              )
+            })}
+            {plain.slice(2).map(plainRow)}
+            {plainRow(['Total', peso(before.total), peso(after.total)])}
+          </tbody>
+        </table>
+      )}
       <p className="muted-note">Sent {formatDate(request.created_at)}. Nothing changes until you approve. If you reject, the customer sees your reason.</p>
     </section>
   )
