@@ -54,7 +54,7 @@ export default function Reviews() {
         <ul className="reviews-spread">
           {spread.map(row => (
             <li key={row.stars}>
-              <span>{row.stars} <Star size={12} weight="fill" aria-hidden="true" /></span>
+              <span>{row.stars} <Star size={14} weight="fill" aria-hidden="true" /></span>
               <i><b style={{ width: `${(row.count / data.length) * 100}%` }} /></i>
               <small>{row.count}</small>
             </li>

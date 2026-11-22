@@ -95,10 +95,10 @@ export default function Reports() {
       </div>
 
       <div className="kpi-grid">
-        <StatCard icon={<CalendarCheck size={16} weight="bold" />} tone="cream" label="Bookings" value={report.totals.bookings.toLocaleString()} note={`${report.totals.completed} completed · ${periodLabel.toLowerCase()}`} />
-        <StatCard icon={<Storefront size={16} weight="bold" />} tone="gold" label="Sales" value={peso(report.totals.sales)} note="completed bookings" />
-        <StatCard icon={<Wallet size={16} weight="bold" />} tone="green" label="Owners earned" value={peso(report.totals.earns)} note="after the Cuisina fee" />
-        <StatCard icon={<Coins size={16} weight="bold" />} tone="gold" label="Cuisina earned" value={peso(report.totals.fee)}
+        <StatCard icon={<CalendarCheck size={26} weight="duotone" />} tone="cream" label="Bookings" value={report.totals.bookings.toLocaleString()} note={`${report.totals.completed} completed · ${periodLabel.toLowerCase()}`} />
+        <StatCard icon={<Storefront size={26} weight="duotone" />} tone="gold" label="Sales" value={peso(report.totals.sales)} note="completed bookings" />
+        <StatCard icon={<Wallet size={26} weight="duotone" />} tone="green" label="Owners earned" value={peso(report.totals.earns)} note="after the Cuisina fee" />
+        <StatCard icon={<Coins size={26} weight="duotone" />} tone="gold" label="Cuisina earned" value={peso(report.totals.fee)}
           note={report.hasFee ? (report.rates.length ? `fee ${report.rates.map(formatRate).join(', ')}` : 'commission') : 'run migration 029 for the fee'} />
       </div>
 

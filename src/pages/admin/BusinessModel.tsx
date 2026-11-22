@@ -106,10 +106,10 @@ export default function BusinessModel() {
   return (
     <>
       <div className="kpi-grid">
-        <StatCard icon={<Percent size={16} weight="bold" />} tone="green" label="Commission rate" value={formatRate(current)} note={`per completed booking · since ${formatDate(data.updated_at)}`} />
-        <StatCard icon={<CalendarCheck size={16} weight="bold" />} tone="cream" label="Completed bookings" value={Number(data.completed_bookings).toLocaleString()} note="only completed bookings count" />
-        <StatCard icon={<Storefront size={16} weight="bold" />} tone="gold" label="Total sales" value={peso(Number(data.total_sales))} note="paid by customers" />
-        <StatCard icon={<Coins size={16} weight="bold" />} tone="green" label="Cuisina earnings" value={peso(Number(data.total_commission))} note={`caterers receive ${peso(Number(data.total_sales) - Number(data.total_commission))}`} />
+        <StatCard icon={<Percent size={26} weight="duotone" />} tone="green" label="Commission rate" value={formatRate(current)} note={`per completed booking · since ${formatDate(data.updated_at)}`} />
+        <StatCard icon={<CalendarCheck size={26} weight="duotone" />} tone="cream" label="Completed bookings" value={Number(data.completed_bookings).toLocaleString()} note="only completed bookings count" />
+        <StatCard icon={<Storefront size={26} weight="duotone" />} tone="gold" label="Total sales" value={peso(Number(data.total_sales))} note="paid by customers" />
+        <StatCard icon={<Coins size={26} weight="duotone" />} tone="green" label="Cuisina earnings" value={peso(Number(data.total_commission))} note={`caterers receive ${peso(Number(data.total_sales) - Number(data.total_commission))}`} />
       </div>
 
       <div className="admin-card">
@@ -157,7 +157,7 @@ export default function BusinessModel() {
                     : <span className="cr-badge"><b>{formatRate(rate)}</b> Standard rate</span>}</td>
                   <td><SplitBar rate={rate} /></td>
                   <td className="cr-amounts"><span>Cuisina <b>{peso(EXAMPLE * rate / 100)}</b></span><span>Caterer <b>{peso(EXAMPLE * (100 - rate) / 100)}</b></span></td>
-                  <td><button type="button" className="cr-change" onClick={() => openRate(caterer)}><PencilSimple size={15} weight="bold" /> Change rate</button></td>
+                  <td><button type="button" className="cr-change" onClick={() => openRate(caterer)}><PencilSimple size={16} weight="bold" /> Change rate</button></td>
                 </tr>
               )
             })}</tbody>

@@ -1,3 +1,4 @@
+import { X } from '@phosphor-icons/react'
 import { useState } from 'react'
 import type { FormEvent } from 'react'
 import { EmptyState, ErrorBanner } from '../../components/Brand'
@@ -230,7 +231,7 @@ export default function Styling() {
             )}
             <label className="wide">Photo <small>(recommended, customers choose by picture)</small>
               <span className="thumb-row">
-                {draft.image_path && <figure><img src={publicImageUrl(draft.image_path) ?? ''} alt="" /><button type="button" aria-label="Remove photo" onClick={() => setDraft({ ...draft, image_path: null })}>×</button></figure>}
+                {draft.image_path && <figure><img src={publicImageUrl(draft.image_path) ?? ''} alt="" /><button type="button" aria-label="Remove photo" onClick={() => setDraft({ ...draft, image_path: null })}><X size={14} weight="bold" /></button></figure>}
                 <span className="thumb-add">{busy ? 'Uploading…' : draft.image_path ? 'Replace' : '+ Photo'}
                   <input type="file" accept="image/*" hidden disabled={busy} onChange={event => { void uploadPhoto(event.target.files?.[0]); event.target.value = '' }} />
                 </span>

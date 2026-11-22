@@ -1,3 +1,4 @@
+import { ArrowSquareOut } from '@phosphor-icons/react'
 import { useEffect, useRef, useState } from 'react'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
@@ -95,7 +96,7 @@ export function EventMap({ lat, lng, label, from }: { lat: number; lng: number; 
         </p>
       )}
       <div className="event-map-links">
-        <a href={directions} target="_blank" rel="noreferrer">Get directions (Google Maps) →</a>
+        <a href={directions} target="_blank" rel="noreferrer">Get directions (Google Maps) <ArrowSquareOut size={14} weight="bold" aria-hidden="true" /></a>
         <small>{lat.toFixed(5)}, {lng.toFixed(5)}</small>
       </div>
       {!from && <p className="muted-note event-map-tip">Tip: pin your business location in Business profile to see the route and distance here.</p>}

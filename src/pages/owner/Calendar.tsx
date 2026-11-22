@@ -121,13 +121,13 @@ export default function Calendar() {
     <>
       <div className="admin-card calendar-card">
         <div className="calendar-head cal-head-sides">
-          <button type="button" className="cal-nav cal-side" onClick={() => shift(-1)} aria-label="Previous month"><CaretLeft size={18} weight="bold" /></button>
+          <button type="button" className="cal-nav cal-side" onClick={() => shift(-1)} aria-label="Previous month"><CaretLeft size={20} weight="bold" /></button>
           <div className="cal-title">
             <h2>{MONTHS[month]} <span>{year}</span></h2>
             <p className="calendar-hint"><Info size={14} weight="bold" aria-hidden="true" /> Click a date to see its bookings or to mark it as not available.</p>
             <button type="button" className="cal-today" onClick={() => { const n = new Date(); setYear(n.getFullYear()); setMonth(n.getMonth()); setSelected(null) }}>Today</button>
           </div>
-          <button type="button" className="cal-nav cal-side" onClick={() => shift(1)} aria-label="Next month"><CaretRight size={18} weight="bold" /></button>
+          <button type="button" className="cal-nav cal-side" onClick={() => shift(1)} aria-label="Next month"><CaretRight size={20} weight="bold" /></button>
         </div>
         <div className="calendar-grid">
           {WEEKDAYS.map(day => <div key={day} className="calendar-weekday">{day}</div>)}

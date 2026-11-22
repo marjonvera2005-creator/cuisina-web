@@ -1,5 +1,7 @@
+import { Info, PencilSimpleLine, Question, Warning } from '@phosphor-icons/react'
 import { useEffect, useId, useRef, useState } from 'react'
 import type { FormEvent, KeyboardEvent, ReactNode } from 'react'
+import { IconTile } from './IconTile'
 
 type Props = {
   title: string
@@ -70,7 +72,11 @@ export function ConfirmDialog({ title, description, confirmLabel, cancelLabel = 
     <div className="dialog-backdrop" role="presentation" onMouseDown={event => { if (event.target === event.currentTarget && !busy) onCancel() }}>
       <form ref={formRef} className="dialog" role="dialog" aria-modal="true" aria-labelledby={titleId}
         aria-describedby={description ? descriptionId : undefined} onSubmit={submit} onKeyDown={onKeyDown}>
-        <h2 id={titleId}>{title}</h2>
+        <div className="dialog-head">
+          {danger ? <IconTile icon={Warning} tone="red" /> : hideCancel ? <IconTile icon={Info} tone="blue" />
+            : inputLabel || children ? <IconTile icon={PencilSimpleLine} tone="gold" /> : <IconTile icon={Question} tone="green" />}
+          <h2 id={titleId}>{title}</h2>
+        </div>
         {description && <p id={descriptionId}>{description}</p>}
         {children}
         {inputLabel && (

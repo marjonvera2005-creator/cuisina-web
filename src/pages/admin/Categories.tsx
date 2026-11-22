@@ -1,6 +1,8 @@
+import { PencilSimple, Trash } from '@phosphor-icons/react'
 import { useState } from 'react'
 import type { FormEvent } from 'react'
 import { EmptyState, ErrorBanner } from '../../components/Brand'
+import { eventIcon, IconTile } from '../../components/IconTile'
 import { db, errorMessage } from '../../lib/supabase'
 import { useQuery } from '../../lib/useQuery'
 import { askConfirm } from '../../components/AskDialog'
@@ -56,10 +58,10 @@ export default function Categories() {
         {(data ?? []).length === 0 ? <EmptyState title="No categories yet" /> : (
           <ul className="doc-list padded">{(data ?? []).map(category => (
             <li key={category.id}>
-              <strong>{category.name}</strong>
+              <span className="with-tile"><IconTile {...eventIcon(category.name)} /><strong>{category.name}</strong></span>
               <div className="row-actions">
-                <button className="reject" onClick={() => { setEditing(category); setName(category.name) }}>Rename</button>
-                <button className="reject" onClick={() => void remove(category)}>Delete</button>
+                <button className="reject" onClick={() => { setEditing(category); setName(category.name) }}><PencilSimple size={16} /> Rename</button>
+                <button className="reject" onClick={() => void remove(category)}><Trash size={16} /> Delete</button>
               </div>
             </li>
           ))}</ul>

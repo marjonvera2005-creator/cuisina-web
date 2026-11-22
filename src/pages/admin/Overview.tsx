@@ -1,4 +1,4 @@
-import { CalendarBlank, SealCheck, Storefront, Users } from '@phosphor-icons/react'
+import { ArrowRight, CalendarBlank, SealCheck, Storefront, Users } from '@phosphor-icons/react'
 import { Link } from 'react-router-dom'
 import { AppQrCard } from '../../components/AppQrCard'
 import { EmptyState, ErrorBanner } from '../../components/Brand'
@@ -58,10 +58,10 @@ export default function Overview() {
   return (
     <>
       <div className="kpi-grid">
-        <StatCard icon={<Storefront size={16} weight="bold" />} tone="gold" label="Pending reviews" value={stats.pending_businesses} note={`${stats.open_complaints} open complaint${stats.open_complaints === 1 ? '' : 's'}`} />
-        <StatCard icon={<SealCheck size={16} weight="bold" />} tone="green" label="Approved businesses" value={stats.approved_businesses} note={`of ${stats.total_businesses} registered`} />
-        <StatCard icon={<Users size={16} weight="bold" />} tone="cream" label="Customers" value={stats.customers} note={`${stats.owners} caterer account${stats.owners === 1 ? '' : 's'}`} />
-        <StatCard icon={<CalendarBlank size={16} weight="bold" />} tone="gold" label="Bookings this month" value={now}
+        <StatCard icon={<Storefront size={26} weight="duotone" />} tone="gold" label="Pending reviews" value={stats.pending_businesses} note={`${stats.open_complaints} open complaint${stats.open_complaints === 1 ? '' : 's'}`} />
+        <StatCard icon={<SealCheck size={26} weight="duotone" />} tone="green" label="Approved businesses" value={stats.approved_businesses} note={`of ${stats.total_businesses} registered`} />
+        <StatCard icon={<Users size={26} weight="duotone" />} tone="cream" label="Customers" value={stats.customers} note={`${stats.owners} caterer account${stats.owners === 1 ? '' : 's'}`} />
+        <StatCard icon={<CalendarBlank size={26} weight="duotone" />} tone="gold" label="Bookings this month" value={now}
           trend={{ delta: now - before, text: `${Math.abs(change)}% vs last month` }} note={`${stats.bookings} all time`} />
       </div>
 
@@ -82,7 +82,7 @@ export default function Overview() {
       </div>
 
       <div className="admin-card">
-        <div className="card-heading"><div><h2>Businesses awaiting approval</h2></div><Link className="outline-button" to="/admin/verification">Review all →</Link></div>
+        <div className="card-heading"><div><h2>Businesses awaiting approval</h2></div><Link className="outline-button" to="/admin/verification">Review all <ArrowRight size={14} weight="bold" aria-hidden="true" /></Link></div>
         {pending.length === 0 ? <EmptyState title="Queue is clear">No applications are waiting for review.</EmptyState> : (
           <div className="table-wrap"><table className="rich-table">
             <thead><tr><th>Business</th><th>Service area</th><th>Status</th><th>Applied</th><th></th></tr></thead>
@@ -92,7 +92,7 @@ export default function Overview() {
                 <td>{item.service_area || 'Not specified'}</td>
                 <td><span className="status pending">Pending</span></td>
                 <td>{formatDate(item.created_at)}</td>
-                <td><Link className="row-link" to="/admin/verification">Review →</Link></td>
+                <td><Link className="row-link" to="/admin/verification">Review <ArrowRight size={14} weight="bold" aria-hidden="true" /></Link></td>
               </tr>
             ))}</tbody>
           </table></div>

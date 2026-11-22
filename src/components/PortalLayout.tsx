@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import type { ReactNode } from 'react'
+import type { Icon } from '@phosphor-icons/react'
 import { ArrowLeft, Bell, CaretDoubleLeft, CaretDoubleRight, CaretDown, SignOut } from '@phosphor-icons/react'
 import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../lib/auth'
@@ -12,7 +12,12 @@ import { onUnreadChanged } from '../lib/unread'
  * `group` puts consecutive items under one collapsible heading.
  * `hidden` keeps a page out of the sidebar (reached another way, e.g. the header bell) but still names the header.
  */
-export type NavItem = { to: string; label: string; icon: ReactNode; end?: boolean; badge?: number; group?: string; groupIcon?: ReactNode; hidden?: boolean }
+export type NavItem = { to: string; label: string; icon: Icon; end?: boolean; badge?: number; group?: string; groupIcon?: Icon; hidden?: boolean }
+
+/** Line icon that fades to the solid one when its page is open. */
+function NavIcon({ icon: Glyph }: { icon: Icon }) {
+  return <i className="nav-icon" aria-hidden="true"><Glyph size={20} /><Glyph size={20} weight="fill" /></i>
+}
 
 const isActivePath = (item: NavItem, path: string) => (item.end ? path === item.to : path === item.to || path.startsWith(`${item.to}/`))
 
@@ -37,7 +42,7 @@ function SidebarNav({ items, storageKey, collapsed }: { items: NavItem[]; storag
   const link = (item: NavItem) => (
     <NavLink key={item.to} to={item.to} end={item.end} className={({ isActive }) => (isActive ? 'active' : '')}
       title={collapsed ? item.label : undefined} aria-label={collapsed ? item.label : undefined}>
-      <span>{item.icon}</span> <em className="nav-label">{item.label}</em>{item.badge ? <b>{item.badge}</b> : null}
+      <span><NavIcon icon={item.icon} /></span> <em className="nav-label">{item.label}</em>{item.badge ? <b>{item.badge}</b> : null}
     </NavLink>
   )
 
@@ -63,7 +68,7 @@ function SidebarNav({ items, storageKey, collapsed }: { items: NavItem[]; storag
           <div key={block.group} className={`nav-group${expanded ? ' open' : ''}${containsActive ? ' has-active' : ''}`}>
             <button type="button" className="nav-group-toggle" aria-expanded={expanded} aria-controls={id}
               onClick={() => toggle(block.group)} disabled={containsActive} title={containsActive ? 'Contains the current page' : undefined}>
-              <span>{block.items[0].groupIcon ?? block.items[0].icon}</span> {block.group}
+              <span><NavIcon icon={block.items[0].groupIcon ?? block.items[0].icon} /></span> {block.group}
               {!expanded && badge > 0 && <b>{badge}</b>}
               <CaretDown className="chevron" size={14} weight="bold" aria-hidden="true" />
             </button>
@@ -117,6 +122,8 @@ export function PortalLayout({ portalName, items, greeting = 'Here’s what’s 
   const auth = useAuth()
   const navigate = useNavigate()
   const [unread, setUnread] = useState(0)
+  // Counts up when something new arrives: the bell swings once.
+  const [ring, setRing] = useState(0)
   // Sidebar folded to icons only; remembered in this browser.
   const [collapsed, setCollapsed] = useState(() => { try { return localStorage.getItem('cuisina-sidebar-collapsed') === '1' } catch { return false } })
   const toggleSidebar = () => setCollapsed(value => {
@@ -136,6 +143,7 @@ export function PortalLayout({ portalName, items, greeting = 'Here’s what’s 
     const channel = client.channel(`portal-notifications-${userId}`)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'notifications', filter: `user_id=eq.${userId}` }, payload => {
         refresh()
+        if (payload.eventType === 'INSERT') setRing(count => count + 1)
         // A customer changed a booking, or asked to: say so on whatever page is open.
         const row = payload.new as { title?: string; body?: string; type?: string }
         if (payload.eventType === 'INSERT' && row.body && (row.type === 'booking_change' || row.title === 'Booking updated')) toast(row.body, 'info')
@@ -185,7 +193,7 @@ export function PortalLayout({ portalName, items, greeting = 'Here’s what’s 
           <div><strong>{name}</strong><small>{role} · <i>Online</i></small></div>
         </div>
         <SidebarNav items={items} storageKey={`cuisina-nav-${base}`} collapsed={collapsed} />
-        <button className="admin-logout" onClick={() => void logout()} title={collapsed ? 'Log out' : undefined}><span><SignOut size={20} /></span> <em className="nav-label">Log out</em></button>
+        <button className="admin-logout" onClick={() => void logout()} title={collapsed ? 'Log out' : undefined}><span><NavIcon icon={SignOut} /></span> <em className="nav-label">Log out</em></button>
       </aside>
       <main className="admin-main">
         {/* Home: a welcome banner. Other pages: the page title. */}
@@ -196,14 +204,14 @@ export function PortalLayout({ portalName, items, greeting = 'Here’s what’s 
               ? <><h1>Welcome back, {firstName}! <span aria-hidden="true">👋</span></h1><p>{greeting}</p></>
               : <div className="header-with-back">
                   <button type="button" className="back-button" onClick={goBack} aria-label="Back to the previous page" title="Back to the previous page">
-                    <ArrowLeft size={18} weight="bold" /> <span>Back</span>
+                    <ArrowLeft size={20} weight="bold" /> <span>Back</span>
                   </button>
                   <h1>{current?.label ?? portalName}</h1>
                 </div>}
           </div>
           <div className="header-meta">
             <Link to={`${base}/notifications`} className="bell" aria-label={unread ? `${unread} unread notifications` : 'Notifications'}>
-              <Bell size={20} />
+              <span key={ring} className={ring ? 'bell-icon ring' : 'bell-icon'}><Bell size={20} weight={unread > 0 ? 'fill' : 'regular'} /></span>
               {unread > 0 && <b>{unread > 9 ? '9+' : unread}</b>}
             </Link>
             <UserMenu initial={initial} firstName={firstName} base={base} onLogout={() => void logout()} />

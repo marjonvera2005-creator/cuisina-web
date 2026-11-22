@@ -159,7 +159,7 @@ export default function Complaints() {
               </header>
 
               <section className="rc-message">
-                <h4><ChatCircleText size={15} weight="bold" aria-hidden="true" /> What happened</h4>
+                <h4><ChatCircleText size={16} weight="bold" aria-hidden="true" /> What happened</h4>
                 <blockquote>{item.description}</blockquote>
               </section>
 
@@ -186,7 +186,7 @@ export default function Complaints() {
 
               {item.admin_reply ? (
                 <section className="rc-answer">
-                  <h4><ArrowBendUpLeft size={15} weight="bold" aria-hidden="true" /> Your reply{item.replied_at ? <small> · {formatDate(item.replied_at)}</small> : null}</h4>
+                  <h4><ArrowBendUpLeft size={16} weight="bold" aria-hidden="true" /> Your reply{item.replied_at ? <small> · {formatDate(item.replied_at)}</small> : null}</h4>
                   <p>{item.admin_reply}</p>
                 </section>
               ) : item.status === 'open' ? (

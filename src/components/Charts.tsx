@@ -25,7 +25,7 @@ export function StatCard({ icon, tone, label, value, trend, note, to }: {
         <strong className="kpi-value">{value}</strong>
         {trend && (
           <small className={`kpi-trend ${trend.delta > 0 ? 'up' : trend.delta < 0 ? 'down' : ''}`}>
-            {trend.delta > 0 ? <ArrowUp size={13} weight="bold" aria-hidden="true" /> : trend.delta < 0 ? <ArrowDown size={13} weight="bold" aria-hidden="true" /> : <Minus size={13} weight="bold" aria-hidden="true" />}
+            {trend.delta > 0 ? <ArrowUp size={14} weight="bold" aria-hidden="true" /> : trend.delta < 0 ? <ArrowDown size={14} weight="bold" aria-hidden="true" /> : <Minus size={14} weight="bold" aria-hidden="true" />}
             {trend.text}
           </small>
         )}

@@ -1,3 +1,4 @@
+import { ArrowRight, CalendarBlank, CalendarX, CaretDown, Check, CheckCircle, Clock, Eye, EyeSlash, Flag, Hash, MapPin, Minus, PencilSimple, PencilSimpleLine, Play, Plus, Prohibit, Tag, UsersThree, X } from '@phosphor-icons/react'
 import { useEffect, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { EmptyState, ErrorBanner, StatusBadge } from '../../components/Brand'
@@ -129,9 +130,9 @@ function ChangeSummary({ before, after }: { before: BookingSnapshot; after: Book
   const removed = lists.flatMap(list => list.diff.removed)
   const changed = lists.flatMap(list => list.diff.changed)
   const difference = Number(after.total) - Number(before.total)
-  const group = (title: string, kind: string, sign: string, items: Line[]) => items.length > 0 && (
+  const group = (title: string, kind: 'added' | 'removed', items: Line[]) => items.length > 0 && (
     <div className={`chg-group ${kind}`}>
-      <h5><b aria-hidden="true">{sign}</b> {title} <span>{items.length}</span></h5>
+      <h5>{kind === 'added' ? <Plus size={16} weight="bold" aria-hidden="true" /> : <Minus size={16} weight="bold" aria-hidden="true" />} {title} <span>{items.length}</span></h5>
       <ul>{items.map((line, index) => <li key={`${line.key}-${index}`}>{line.text}</li>)}</ul>
     </div>
   )
@@ -143,7 +144,7 @@ function ChangeSummary({ before, after }: { before: BookingSnapshot; after: Book
       <div className="chg-summary">
         <div className="chg-total">
           <span>Total</span>
-          <strong><s>{peso(before.total)}</s> <i aria-hidden="true">→</i><span className="sr-only"> becomes </span> {peso(after.total)}</strong>
+          <strong><s>{peso(before.total)}</s> <ArrowRight size={16} weight="bold" aria-hidden="true" /><span className="sr-only"> becomes </span> {peso(after.total)}</strong>
           <em className={difference > 0 ? 'up' : difference < 0 ? 'down' : ''}>
             {difference === 0 ? 'Same price' : `${difference > 0 ? '+' : '−'}${peso(Math.abs(difference))}`}
           </em>
@@ -151,23 +152,23 @@ function ChangeSummary({ before, after }: { before: BookingSnapshot; after: Book
         <div className="chg-groups">
           {changedPlain.length > 0 && (
             <div className="chg-group edited">
-              <h5><b aria-hidden="true">✎</b> Changed details <span>{changedPlain.length}</span></h5>
-              <ul>{changedPlain.map(([label, now, next]) => <li key={label}><strong>{label}:</strong> <s>{now}</s> → {next}</li>)}</ul>
+              <h5><PencilSimple size={16} weight="bold" aria-hidden="true" /> Changed details <span>{changedPlain.length}</span></h5>
+              <ul>{changedPlain.map(([label, now, next]) => <li key={label}><strong>{label}:</strong> <s>{now}</s> <ArrowRight size={14} weight="bold" aria-label="becomes" /> {next}</li>)}</ul>
             </div>
           )}
-          {group('Added', 'added', '+', added)}
-          {group('Removed', 'removed', '−', removed)}
+          {group('Added', 'added', added)}
+          {group('Removed', 'removed', removed)}
           {changed.length > 0 && (
             <div className="chg-group edited">
-              <h5><b aria-hidden="true">✎</b> New price or quantity <span>{changed.length}</span></h5>
-              <ul>{changed.map(({ from, to }, index) => <li key={`${to.key}-${index}`}><s>{from.text}</s> → {to.text}</li>)}</ul>
+              <h5><Tag size={16} weight="bold" aria-hidden="true" /> New price or quantity <span>{changed.length}</span></h5>
+              <ul>{changed.map(({ from, to }, index) => <li key={`${to.key}-${index}`}><s>{from.text}</s> <ArrowRight size={14} weight="bold" aria-label="becomes" /> {to.text}</li>)}</ul>
             </div>
           )}
         </div>
       </div>
 
       <button type="button" className="chg-toggle" aria-expanded={full} onClick={() => setFull(value => !value)}>
-        {full ? 'Hide full comparison' : 'Show full comparison'}
+        {full ? <><EyeSlash size={16} /> Hide full comparison</> : <><Eye size={16} /> Show full comparison</>}
       </button>
       {full && (
         <table className="chg-table">
@@ -202,8 +203,8 @@ function ChangeRequestView({ request, customer, onAnswer }: { request: ChangeReq
       {request.note && <p className="bk-text">“{request.note}”</p>}
       <ChangeSummary before={request.current_booking} after={request.requested} />
       <div className="bk-actions chg-answer">
-        <button type="button" className="approve" onClick={() => onAnswer(true)}>Approve changes</button>
-        <button type="button" className="reject danger-text" onClick={() => onAnswer(false)}>Reject changes</button>
+        <button type="button" className="approve" onClick={() => onAnswer(true)}><Check size={16} weight="bold" /> Approve changes</button>
+        <button type="button" className="reject danger-text" onClick={() => onAnswer(false)}><X size={16} weight="bold" /> Reject changes</button>
       </div>
       <p className="muted-note">Sent {formatDate(request.created_at)}. Nothing changes until you approve. If you reject, the customer sees your reason.</p>
     </section>
@@ -468,7 +469,7 @@ export default function Bookings() {
             <span className="bk-cell" data-label="Guests">{booking.guest_count}</span>
             <span className="bk-cell bk-total" data-label="Total">{peso(booking.total_price)}</span>
             <span className="bk-cell"><StatusBadge status={booking.status} />{booking.status === 'pending' && <HoldNotice booking={booking} short />}{data.changes.has(booking.id) && <span className="chg-tag">Change request</span>}{booking.status === 'pending' && data.edits.has(booking.id) && <span className="chg-tag edited">Edited</span>}</span>
-            <svg className="chevron" viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><path d="M4 6l4 4 4-4" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" /></svg>
+            <CaretDown className="chevron" size={16} weight="bold" aria-hidden="true" />
           </button>
           {open && (
             <div className="bk-detail">
@@ -481,11 +482,11 @@ export default function Bookings() {
                 <section>
                   <h4>Event</h4>
                   <dl className="bk-facts">
-                    <div><dt>When</dt><dd>{formatDate(booking.event_date)}, {formatTime(booking.event_time)}</dd></div>
-                    <div><dt>Where</dt><dd>{booking.location}</dd></div>
-                    <div><dt>Guests</dt><dd>{booking.guest_count}</dd></div>
-                    <div><dt>Booking no.</dt><dd>{numbers.get(booking.id)}</dd></div>
-                    <div><dt>Requested</dt><dd>{formatDate(booking.created_at)}</dd></div>
+                    <div><dt><CalendarBlank size={14} aria-hidden="true" /> When</dt><dd>{formatDate(booking.event_date)}, {formatTime(booking.event_time)}</dd></div>
+                    <div><dt><MapPin size={14} aria-hidden="true" /> Where</dt><dd>{booking.location}</dd></div>
+                    <div><dt><UsersThree size={14} aria-hidden="true" /> Guests</dt><dd>{booking.guest_count}</dd></div>
+                    <div><dt><Hash size={14} aria-hidden="true" /> Booking no.</dt><dd>{numbers.get(booking.id)}</dd></div>
+                    <div><dt><Clock size={14} aria-hidden="true" /> Requested</dt><dd>{formatDate(booking.created_at)}</dd></div>
                   </dl>
                   {booking.event_lat != null && booking.event_lng != null && (
                     <EventMap lat={booking.event_lat} lng={booking.event_lng} from={data.home}
@@ -542,23 +543,23 @@ export default function Bookings() {
                 {['pending', 'accepted', 'in_progress'].includes(booking.status) && (
                   <div className="bk-actions">
                     {booking.status === 'pending' && <>
-                      <button className="approve" onClick={() => ask(booking, 'accepted', 'Accept this booking?')}>Accept booking</button>
-                      {booking.owner_proposal?.status !== 'open' && <button className="reject" onClick={() => { setSuggestTotal(''); setSuggest(booking) }}>Suggest changes</button>}
-                      <button className="reject danger-text" onClick={() => ask(booking, 'rejected', 'Reject this booking?', true, true)}>Reject</button>
+                      <button className="approve" onClick={() => ask(booking, 'accepted', 'Accept this booking?')}><Check size={16} weight="bold" /> Accept booking</button>
+                      {booking.owner_proposal?.status !== 'open' && <button className="reject" onClick={() => { setSuggestTotal(''); setSuggest(booking) }}><PencilSimpleLine size={16} weight="bold" /> Suggest changes</button>}
+                      <button className="reject danger-text" onClick={() => ask(booking, 'rejected', 'Reject this booking?', true, true)}><X size={16} weight="bold" /> Reject</button>
                     </>}
                     {booking.status === 'accepted' && <>
-                      <button className="approve" onClick={() => ask(booking, 'in_progress', 'Mark this event as in progress?')}>Start event</button>
-                      <button className="reject danger-text" onClick={() => ask(booking, 'cancelled', 'Cancel this booking?', true, true)}>Cancel booking</button>
+                      <button className="approve" onClick={() => ask(booking, 'in_progress', 'Mark this event as in progress?')}><Play size={16} weight="fill" /> Start event</button>
+                      <button className="reject danger-text" onClick={() => ask(booking, 'cancelled', 'Cancel this booking?', true, true)}><CalendarX size={16} weight="bold" /> Cancel booking</button>
                     </>}
                     {booking.status === 'in_progress' && <>
-                      <button className="approve" onClick={() => ask(booking, 'completed', 'Mark this booking as completed?')}>Mark completed</button>
+                      <button className="approve" onClick={() => ask(booking, 'completed', 'Mark this booking as completed?')}><CheckCircle size={16} weight="bold" /> Mark completed</button>
                       {/* No cancelling once the event is in progress (migration 035). */}
                       <span className="bk-locked">The event is in progress, so it can no longer be cancelled.</span>
                     </>}
                   </div>
                 )}
                 {/* Any booking, any status: tell the administrator about a problem with it. */}
-                <button type="button" className="report-link" onClick={() => { setReported(''); setReporting({ booking }) }}>Report a problem with this booking</button>
+                <button type="button" className="report-link" onClick={() => { setReported(''); setReporting({ booking }) }}><Flag size={16} /> Report a problem with this booking</button>
                 {reported === booking.id && <p className="form-success">Sent. The administrator will reply in Notifications and in Help &amp; support.</p>}
                 {/* This customer: block from this business only, or ask the administrator to deactivate the account. */}
                 <div className="bk-customer-tools">
@@ -567,7 +568,7 @@ export default function Bookings() {
                     <p className="muted-note">Blocked: they cannot send you new booking requests. Other caterers are not affected.</p>
                     <button className="reject" onClick={() => setBlocking({ booking, block: false })}>Unblock customer</button>
                   </> : (
-                    <button className="reject danger-text" onClick={() => setBlocking({ booking, block: true })}>Block from my business</button>
+                    <button className="reject danger-text" onClick={() => setBlocking({ booking, block: true })}><Prohibit size={16} weight="bold" /> Block from my business</button>
                   ))}
                   <button type="button" className="report-link" onClick={() => { setReported(''); setReporting({ booking, category: 'deactivation' }) }}>Ask the administrator to deactivate this customer</button>
                 </div>

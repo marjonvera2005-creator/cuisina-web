@@ -59,16 +59,16 @@ export function MapFrame({ map, children, others = false }: { map: RefObject<Fra
         <div className="map-frame-buttons">
           <button type="button" className="map-frame-button" onClick={() => setFull(f => !f)}
             title={full ? 'Exit full screen (Esc)' : 'View full screen'} aria-label={full ? 'Exit full screen' : 'View full screen'}>
-            {full ? <ArrowsIn size={18} weight="bold" /> : <ArrowsOut size={18} weight="bold" />}
+            {full ? <ArrowsIn size={20} weight="bold" /> : <ArrowsOut size={20} weight="bold" />}
           </button>
           <button type="button" className="map-frame-button" onClick={() => setMapDark(!dark)}
             title={dark ? 'Light map' : 'Dark map'} aria-label={dark ? 'Switch to light map' : 'Switch to dark map'} aria-pressed={dark}>
-            {dark ? <Sun size={18} weight="bold" /> : <Moon size={18} weight="bold" />}
+            {dark ? <Sun size={20} weight="bold" /> : <Moon size={20} weight="bold" />}
           </button>
           {others && (
             <button type="button" className={`map-frame-button${showOthers ? ' is-on' : ''}`} onClick={() => setShowOthers(!showOthers)}
               title={showOthers ? 'Hide other caterers' : 'Show other caterers'} aria-label="Show other caterers" aria-pressed={showOthers}>
-              <Storefront size={18} weight={showOthers ? 'fill' : 'bold'} />
+              <Storefront size={20} weight={showOthers ? 'fill' : 'bold'} />
             </button>
           )}
         </div>

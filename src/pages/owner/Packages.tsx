@@ -325,9 +325,9 @@ export default function Packages() {
                     <input className="pk-course-name" value={course.name} placeholder="Course name" aria-label="Course name" onChange={event => patchCourse(index, { name: event.target.value })} />
                     <div className="pk-stepper" aria-label="How many dishes guests can pick">
                       <span>Guests pick</span>
-                      <button type="button" aria-label="Fewer" disabled={course.max <= 1} onClick={() => patchCourse(index, { max: course.max - 1 })}><Minus size={12} weight="bold" /></button>
+                      <button type="button" aria-label="Fewer" disabled={course.max <= 1} onClick={() => patchCourse(index, { max: course.max - 1 })}><Minus size={14} weight="bold" /></button>
                       <b>{course.max}</b>
-                      <button type="button" aria-label="More" disabled={course.max >= 20} onClick={() => patchCourse(index, { max: course.max + 1 })}><Plus size={12} weight="bold" /></button>
+                      <button type="button" aria-label="More" disabled={course.max >= 20} onClick={() => patchCourse(index, { max: course.max + 1 })}><Plus size={14} weight="bold" /></button>
                     </div>
                     <div className="pk-icon-actions">
                       <button type="button" aria-label="Move course up" disabled={index === 0} onClick={() => moveCourse(index, -1)}><CaretUp size={14} /></button>
@@ -339,7 +339,7 @@ export default function Packages() {
                     {course.dishes.map((dish, dishIndex) => (
                       <li key={dishIndex}>
                         <label className="pk-dish-photo" title={dish.image_path ? 'Change photo' : 'Add a photo'}>
-                          {dish.image_path ? <img src={publicImageUrl(dish.image_path) ?? ''} alt="" /> : <Camera size={18} />}
+                          {dish.image_path ? <img src={publicImageUrl(dish.image_path) ?? ''} alt="" /> : <Camera size={20} />}
                           <input type="file" accept="image/*" hidden disabled={busy} onChange={event => { void uploadDishPhoto(index, dishIndex, event.target.files?.[0]); event.target.value = '' }} />
                         </label>
                         <div className="pk-dish-text">
@@ -356,9 +356,9 @@ export default function Packages() {
               <div className="pk-presets">
                 <span>Add a course:</span>
                 {COURSE_PRESETS.filter(name => !draft.courses.some(c => c.name.toLowerCase() === name.toLowerCase())).map(name => (
-                  <button type="button" key={name} onClick={() => patch({ courses: [...draft.courses, { name, max: 1, dishes: [emptyDish()] }] })}><Plus size={12} /> {name}</button>
+                  <button type="button" key={name} onClick={() => patch({ courses: [...draft.courses, { name, max: 1, dishes: [emptyDish()] }] })}><Plus size={14} /> {name}</button>
                 ))}
-                <button type="button" onClick={() => patch({ courses: [...draft.courses, { name: '', max: 1, dishes: [emptyDish()] }] })}><Plus size={12} /> Other</button>
+                <button type="button" onClick={() => patch({ courses: [...draft.courses, { name: '', max: 1, dishes: [emptyDish()] }] })}><Plus size={14} /> Other</button>
               </div>
             </section>
 
@@ -383,7 +383,7 @@ export default function Packages() {
                       <button type="button" aria-label="Remove photo" onClick={() => void removeImage(image)}><X size={12} weight="bold" /></button>
                     </figure>
                   ))}
-                  <label className="pk-photo-add"><ImageIcon size={22} />{busy ? 'Uploading…' : 'Add photos'}
+                  <label className="pk-photo-add"><ImageIcon size={20} />{busy ? 'Uploading…' : 'Add photos'}
                     <input type="file" accept="image/*" multiple hidden disabled={busy} onChange={event => { void addImages(saved, event.target.files); event.target.value = '' }} />
                   </label>
                 </div>
@@ -394,7 +394,7 @@ export default function Packages() {
           <aside className="pk-preview">
             <p className="pk-preview-label"><Eye size={14} /> Customer preview</p>
             <div className="admin-card pk-preview-card">
-              <div className="pk-cover">{cover ? <img src={cover} alt="" /> : <span><ForkKnife size={28} /></span>}</div>
+              <div className="pk-cover">{cover ? <img src={cover} alt="" /> : <span><ForkKnife size={26} /></span>}</div>
               <div className="pk-preview-body">
                 <h4>{draft.name || 'Package name'}</h4>
                 <p className="pk-price">{price ? peso(price) : '₱0'} <small>per guest · min {guests || 0}</small></p>
@@ -430,24 +430,24 @@ export default function Packages() {
     return (
       <article key={pack.id} className={`admin-card pk-card${pack.is_archived ? ' hidden' : ''}`}>
         <button type="button" className="pk-card-cover" onClick={() => open(pack)} aria-label={`Edit ${pack.name}`}>
-          {cover ? <img src={cover} alt="" /> : <span><Camera size={22} />No photo yet</span>}
+          {cover ? <img src={cover} alt="" /> : <span><Camera size={20} />No photo yet</span>}
           <em className={pack.is_archived ? 'off' : 'on'}>{pack.is_archived ? 'Hidden' : 'Available'}</em>
         </button>
         <div className="pk-card-body">
           <h3>{pack.name}</h3>
           <p className="pk-price">{peso(pack.price)} <small>per guest</small></p>
           <ul className="pk-meta">
-            <li><UsersThree size={15} /> {pack.pax_options?.length ? `${pack.pax_options.join(' · ')} pax` : 'No pax options yet'}</li>
-            <li><ForkKnife size={15} /> {pack.package_courses.length} course{pack.package_courses.length === 1 ? '' : 's'}, {dishes} dish{dishes === 1 ? '' : 'es'}</li>
+            <li><UsersThree size={16} /> {pack.pax_options?.length ? `${pack.pax_options.join(' · ')} pax` : 'No pax options yet'}</li>
+            <li><ForkKnife size={16} /> {pack.package_courses.length} course{pack.package_courses.length === 1 ? '' : 's'}, {dishes} dish{dishes === 1 ? '' : 'es'}</li>
           </ul>
           {events.length > 0 && <p className="pk-events">{events.join(' · ')}</p>}
           {!pack.is_archived && !pack.pax_options?.length && <p className="pk-warn">Hidden from customers: edit it and tick the pax it is offered for.</p>}
           {pack.package_courses.length === 0 && !pack.is_archived && <p className="pk-warn">No menu yet. Customers can't choose dishes.</p>}
         </div>
         <div className="pk-card-actions">
-          <button type="button" className="approve" onClick={() => open(pack)}><PencilSimple size={15} /> Edit</button>
+          <button type="button" className="approve" onClick={() => open(pack)}><PencilSimple size={16} /> Edit</button>
           <button type="button" className="reject" onClick={() => void toggleArchive(pack)}>
-            {pack.is_archived ? <><Eye size={15} /> Show to customers</> : <><EyeSlash size={15} /> Hide</>}
+            {pack.is_archived ? <><Eye size={16} /> Show to customers</> : <><EyeSlash size={16} /> Hide</>}
           </button>
         </div>
       </article>

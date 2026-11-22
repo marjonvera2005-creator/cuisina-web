@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import type { ReactNode } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
-import { CalendarCheck, CalendarPlus, CalendarX, Checks, Flag, Info, PencilSimpleLine, SealCheck, Storefront } from '@phosphor-icons/react'
+import { CalendarCheck, CalendarPlus, CalendarX, CaretRight, Checks, Flag, Info, PencilSimpleLine, SealCheck, Storefront } from '@phosphor-icons/react'
 import { EmptyState, ErrorBanner } from '../components/Brand'
 import { useAuth } from '../lib/auth'
 import { formatDate } from '../lib/format'
@@ -218,7 +218,7 @@ export default function Notifications() {
           </button>
         </div>
         <button type="button" className="ghost-button nt-markall" disabled={unread === 0} onClick={() => void markAllRead()}>
-          <Checks size={17} weight="bold" /> Mark all as read
+          <Checks size={16} weight="bold" /> Mark all as read
         </button>
       </div>
 
@@ -251,7 +251,7 @@ export default function Notifications() {
                       </span>
                       <span className="nt-side">
                         <time dateTime={item.created_at} title={new Date(item.created_at).toLocaleString()}>{whenLabel(item.created_at, now)}</time>
-                        {target && <span className="nt-go">{actionLabel(item, portal)} ›</span>}
+                        {target && <span className="nt-go">{actionLabel(item, portal)} <CaretRight size={14} weight="bold" aria-hidden="true" /></span>}
                       </span>
                     </button>
                   </li>

@@ -28,21 +28,20 @@ function OwnerNav() {
   // New booking request (notification) or any booking status change: update the badge at once.
   useLiveRefresh(userId, pending.reload, ['bookings'])
 
-  const icon = (Icon: typeof SquaresFour) => <Icon size={21} />
   const items: NavItem[] = [
-    { to: '/owner', label: 'Dashboard', icon: icon(SquaresFour), end: true },
-    { to: '/owner/bookings', label: 'Bookings', icon: icon(CalendarCheck), badge: pending.data ?? 0 },
-    { to: '/owner/calendar', label: 'Calendar', icon: icon(CalendarBlank) },
-    { to: '/owner/packages', label: 'Packages', icon: icon(Package) },
-    { to: '/owner/styling', label: 'Designs & styling', icon: icon(Flower), group: 'Menu & offerings', groupIcon: icon(ForkKnife) },
-    { to: '/owner/addons', label: 'Add-ons', icon: icon(PlusCircle), group: 'Menu & offerings' },
-    { to: '/owner/reports', label: 'Reports', icon: icon(ChartBar) },
-    { to: '/owner/reviews', label: 'Reviews', icon: icon(Star) },
-    { to: '/owner/business', label: 'Business profile', icon: icon(Storefront) },
-    { to: '/owner/support', label: 'Help & support', icon: icon(Lifebuoy) },
-    { to: '/owner/display', label: 'Accessibility & display', icon: icon(TextAa) },
+    { to: '/owner', label: 'Dashboard', icon: SquaresFour, end: true },
+    { to: '/owner/bookings', label: 'Bookings', icon: CalendarCheck, badge: pending.data ?? 0 },
+    { to: '/owner/calendar', label: 'Calendar', icon: CalendarBlank },
+    { to: '/owner/packages', label: 'Packages', icon: Package },
+    { to: '/owner/styling', label: 'Designs & styling', icon: Flower, group: 'Menu & offerings', groupIcon: ForkKnife },
+    { to: '/owner/addons', label: 'Add-ons', icon: PlusCircle, group: 'Menu & offerings' },
+    { to: '/owner/reports', label: 'Reports', icon: ChartBar },
+    { to: '/owner/reviews', label: 'Reviews', icon: Star },
+    { to: '/owner/business', label: 'Business profile', icon: Storefront },
+    { to: '/owner/support', label: 'Help & support', icon: Lifebuoy },
+    { to: '/owner/display', label: 'Accessibility & display', icon: TextAa },
     // Reached from the bell in the header.
-    { to: '/owner/notifications', label: 'Notifications', icon: <Bell size={18} />, hidden: true },
+    { to: '/owner/notifications', label: 'Notifications', icon: Bell, hidden: true },
   ]
   return <PortalLayout portalName="Caterer Portal" items={items} greeting="Here’s an overview of your catering business." />
 }

@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { ArrowRight, CalendarBlank, CalendarCheck, ChartBar, ClipboardText, Clock, Crown, CurrencyCircleDollar, Sparkle, Star, Users } from '@phosphor-icons/react'
+import { ArrowRight, CalendarBlank, CalendarCheck, ChartBar, Check, ClipboardText, Clock, Crown, Wallet, Sparkle, Star, Users } from '@phosphor-icons/react'
 import { Link } from 'react-router-dom'
 import { EmptyState, ErrorBanner, LeafSprig, StatusBadge } from '../../components/Brand'
 import { ChangeRequestsBanner } from '../../components/ChangeRequestsBanner'
@@ -125,43 +125,43 @@ export default function Dashboard() {
             {business.verification_status === 'rejected' && (business.rejection_reason ? `Reason: ${business.rejection_reason}` : 'Update your details and resubmit.')}
             {business.verification_status === 'suspended' && 'Your listing is hidden. Contact support for details.'}
           </div>
-          <Link to="/owner/business">Review application →</Link>
+          <Link to="/owner/business">Review application <ArrowRight size={14} weight="bold" aria-hidden="true" /></Link>
         </div>
       )}
       <ChangeRequestsBanner />
       {pinned.data === false && (
         <div className="status-banner pending">
           <div><strong>Your business location is not pinned yet.</strong> Customers cannot see you on the map, and booking maps cannot show the route to events.</div>
-          <Link to="/owner/business">Pin your location →</Link>
+          <Link to="/owner/business">Pin your location <ArrowRight size={14} weight="bold" aria-hidden="true" /></Link>
         </div>
       )}
       {(business.verification_status !== 'approved' || packages.length === 0) && (
         <div className="admin-card checklist">
           <div className="card-heading"><div><h2>Get your business in front of customers</h2></div></div>
           <ol>
-            <li className="done"><span>✓</span> Register your business</li>
-            <li className={documents > 0 ? 'done' : ''}><span>{documents > 0 ? '✓' : '2'}</span> <Link to="/owner/business">Upload your verification documents</Link></li>
-            <li className={business.verification_status === 'approved' ? 'done' : ''}><span>{business.verification_status === 'approved' ? '✓' : '3'}</span> Wait for administrator approval</li>
-            <li className={packages.length > 0 ? 'done' : ''}><span>{packages.length > 0 ? '✓' : '4'}</span> <Link to="/owner/packages">Add packages with your menu and photos</Link></li>
+            <li className="done"><span><Check size={14} weight="bold" aria-hidden="true" /></span> Register your business</li>
+            <li className={documents > 0 ? 'done' : ''}><span>{documents > 0 ? <Check size={14} weight="bold" aria-label="Done" /> : '2'}</span> <Link to="/owner/business">Upload your verification documents</Link></li>
+            <li className={business.verification_status === 'approved' ? 'done' : ''}><span>{business.verification_status === 'approved' ? <Check size={14} weight="bold" aria-label="Done" /> : '3'}</span> Wait for administrator approval</li>
+            <li className={packages.length > 0 ? 'done' : ''}><span>{packages.length > 0 ? <Check size={14} weight="bold" aria-label="Done" /> : '4'}</span> <Link to="/owner/packages">Add packages with your menu and photos</Link></li>
           </ol>
           <p className="muted-note checklist-note">Customers see your packages in the Cuisina app once your business is approved.</p>
         </div>
       )}
 
       <div className="kpi-grid">
-        <StatCard icon={<CalendarCheck size={26} />} tone="gold" label="Pending Requests" value={count('pending')} note="Requests expire after 48 hours" to="/owner/bookings" />
-        <StatCard icon={<Clock size={26} />} tone="green" label="Upcoming Events" value={upcoming.length}
+        <StatCard icon={<CalendarCheck size={26} weight="duotone" />} tone="gold" label="Pending Requests" value={count('pending')} note="Requests expire after 48 hours" to="/owner/bookings" />
+        <StatCard icon={<Clock size={26} weight="duotone" />} tone="green" label="Upcoming Events" value={upcoming.length}
           note={upcoming[0] ? `Next: ${formatDate(upcoming[0].event_date)}` : 'Nothing scheduled yet'} to="/owner/calendar" />
-        <StatCard icon={<Star size={26} />} tone="green" label="Total Bookings" value={bookings.length}
+        <StatCard icon={<ClipboardText size={26} weight="duotone" />} tone="green" label="Total Bookings" value={bookings.length}
           trend={{ delta: requestsNow - requestsBefore, text: `${Math.abs(percentChange(requestsNow, requestsBefore))}% vs last month` }} to="/owner/bookings" />
-        <StatCard icon={<CurrencyCircleDollar size={26} />} tone="gold" label="Total Earnings (Est.)" value={peso(earned(bookings))} note={rates.size ? 'after the Cuisina fee' : undefined}
+        <StatCard icon={<Wallet size={26} weight="duotone" />} tone="gold" label="Total Earnings (Est.)" value={peso(earned(bookings))} note={rates.size ? 'after the Cuisina fee' : undefined}
           trend={{ delta: earnedNow - earnedBefore, text: `${Math.abs(percentChange(earnedNow, earnedBefore))}% vs last month` }} to="/owner/bookings" />
       </div>
 
       <div className="chart-row">
         <div className="admin-card chart-card">
           <div className="chart-head row">
-            <h2><ChartBar size={24} weight="fill" className="head-icon" aria-hidden="true" /> Booking Requests</h2>
+            <h2><ChartBar size={26} weight="fill" className="head-icon" aria-hidden="true" /> Booking Requests</h2>
             <select className="range-select" value={range} onChange={event => setRange(Number(event.target.value) as 6 | 12)} aria-label="Time range">
               <option value={6}>Last 6 Months</option>
               <option value={12}>Last 12 Months</option>
@@ -184,7 +184,7 @@ export default function Dashboard() {
         </div>
 
         <div className="admin-card chart-card top-package">
-          <Sparkle className="sparkle big" size={30} weight="fill" aria-hidden="true" />
+          <Sparkle className="sparkle big" size={26} weight="fill" aria-hidden="true" />
           <Sparkle className="sparkle small" size={14} weight="fill" aria-hidden="true" />
           <LeafSprig className="card-leaf" />
           <div className="chart-head">
@@ -198,8 +198,8 @@ export default function Dashboard() {
                 <h3>{topPackage.name}</h3>
                 {topPackage.description && <p className="top-desc">{topPackage.description}</p>}
                 <ul>
-                  <li><Users size={18} weight="fill" aria-hidden="true" /> From {topPackage.minimum_guests} guests</li>
-                  <li><Star size={18} weight="fill" className="star" aria-hidden="true" /> {rating ? `${rating.toFixed(1)} (${ratings.length} review${ratings.length === 1 ? '' : 's'})` : 'No reviews yet'}</li>
+                  <li><Users size={20} weight="fill" aria-hidden="true" /> From {topPackage.minimum_guests} guests</li>
+                  <li><Star size={20} weight="fill" className="star" aria-hidden="true" /> {rating ? `${rating.toFixed(1)} (${ratings.length} review${ratings.length === 1 ? '' : 's'})` : 'No reviews yet'}</li>
                 </ul>
                 <Link className="pill-button dark" to="/owner/packages">View Package <ArrowRight size={16} weight="bold" /></Link>
               </div>
@@ -210,7 +210,7 @@ export default function Dashboard() {
 
       <div className="admin-card recent-card">
         <div className="card-heading">
-          <div><h2><ClipboardText size={26} className="head-icon" aria-hidden="true" /> Recent Booking Requests</h2></div>
+          <div><h2><ClipboardText size={26} weight="duotone" className="head-icon" aria-hidden="true" /> Recent Booking Requests</h2></div>
           <Link className="pill-button" to="/owner/bookings">View All <ArrowRight size={16} weight="bold" /></Link>
         </div>
         {bookings.length === 0 ? <EmptyState title="No bookings yet">Requests from customers will appear here.</EmptyState> : (
@@ -223,7 +223,7 @@ export default function Dashboard() {
                   <td className="bk-no">{numbers.get(booking.id)}</td>
                   <td><div className="person"><span className="mini-avatar">{name.charAt(0).toUpperCase()}</span><strong>{name}</strong></div></td>
                   <td>{booking.package?.name ?? '—'}</td>
-                  <td><span className="date-cell"><CalendarBlank size={18} aria-hidden="true" /> {formatDate(booking.event_date)}</span></td>
+                  <td><span className="date-cell"><CalendarBlank size={20} aria-hidden="true" /> {formatDate(booking.event_date)}</span></td>
                   <td><StatusBadge status={booking.status} /></td>
                   <td><Link className="view-button" to={`/owner/bookings?booking=${booking.id}`}>View</Link></td>
                 </tr>

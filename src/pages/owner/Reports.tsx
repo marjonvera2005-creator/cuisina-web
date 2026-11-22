@@ -116,14 +116,14 @@ export default function OwnerReports() {
       </div>
 
       <div className="kpi-grid">
-        <StatCard icon={<Wallet size={16} weight="bold" />} tone="green" label="You earned" value={peso(report.earns)} note={`${periodLabel.toLowerCase()} · after the Cuisina fee`} />
-        <StatCard icon={<Receipt size={16} weight="bold" />} tone="gold" label="Total sales" value={peso(report.sales)} note={`Cuisina fee ${peso(report.fee)}`} />
-        <StatCard icon={<CalendarCheck size={16} weight="bold" />} tone="cream" label="Completed events" value={report.done.length} note={`${report.cancelled} cancelled or rejected`} />
-        <StatCard icon={<HourglassMedium size={16} weight="bold" />} tone="gold" label="Expected earnings" value={peso(report.expected)} note={`${report.upcoming.length} accepted, not yet completed`} />
+        <StatCard icon={<Wallet size={26} weight="duotone" />} tone="green" label="You earned" value={peso(report.earns)} note={`${periodLabel.toLowerCase()} · after the Cuisina fee`} />
+        <StatCard icon={<Receipt size={26} weight="duotone" />} tone="gold" label="Total sales" value={peso(report.sales)} note={`Cuisina fee ${peso(report.fee)}`} />
+        <StatCard icon={<CalendarCheck size={26} weight="duotone" />} tone="cream" label="Completed events" value={report.done.length} note={`${report.cancelled} cancelled or rejected`} />
+        <StatCard icon={<HourglassMedium size={26} weight="duotone" />} tone="gold" label="Expected earnings" value={peso(report.expected)} note={`${report.upcoming.length} accepted, not yet completed`} />
       </div>
       <div className="kpi-grid rp-second">
-        <StatCard icon={<Coins size={16} weight="bold" />} tone="cream" label="Average per event" value={peso(average)} note="what you receive" />
-        <StatCard icon={<UsersThree size={16} weight="bold" />} tone="green" label="Guests served" value={report.guests.toLocaleString()} note="completed events" />
+        <StatCard icon={<Coins size={26} weight="duotone" />} tone="cream" label="Average per event" value={peso(average)} note="what you receive" />
+        <StatCard icon={<UsersThree size={26} weight="duotone" />} tone="green" label="Guests served" value={report.guests.toLocaleString()} note="completed events" />
       </div>
 
       <div className="admin-card">

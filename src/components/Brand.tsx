@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom'
+import { emptyIcon, IconTile } from './IconTile'
 
 export function Logo({ className = '', to = '/owner' }: { className?: string; to?: string }) {
   return (
@@ -43,7 +44,7 @@ export function EmptyState({ title, children }: { title: string; children?: Reac
   const isLoading = title.startsWith("Loading")
   return (
     <div className={`empty-state${isLoading ? " is-loading" : ""}`} role={isLoading ? "status" : undefined}>
-      {isLoading && <CuisinaLoader />}
+      {isLoading ? <CuisinaLoader /> : <IconTile {...emptyIcon(title)} size="lg" />}
       <strong>{title}</strong>{children && <p>{children}</p>}
     </div>
   )
