@@ -6,6 +6,7 @@ import { useAuth } from '../lib/auth'
 import { db } from '../lib/supabase'
 import { LeafSprig, Logo, StackedLogo } from './Brand'
 import { toast } from '../lib/toast'
+import { onUnreadChanged } from '../lib/unread'
 
 /**
  * `group` puts consecutive items under one collapsible heading.
@@ -135,7 +136,9 @@ export function PortalLayout({ portalName, items, greeting = 'Here’s what’s 
     const channel = client.channel(`portal-notifications-${userId}`)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'notifications', filter: `user_id=eq.${userId}` }, refresh)
       .subscribe()
-    return () => { void client.removeChannel(channel) }
+    // The Notifications page marked something read: count again so both always match.
+    const stop = onUnreadChanged(refresh)
+    return () => { stop(); void client.removeChannel(channel) }
   }, [auth.userId])
 
   async function logout() {

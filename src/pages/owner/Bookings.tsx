@@ -382,7 +382,8 @@ export default function Bookings() {
                     </>}
                     {booking.status === 'in_progress' && <>
                       <button className="approve" onClick={() => ask(booking, 'completed', 'Mark this booking as completed?')}>Mark completed</button>
-                      <button className="reject danger-text" onClick={() => ask(booking, 'cancelled', 'Cancel this booking?', true, true)}>Cancel booking</button>
+                      {/* No cancelling once the event is in progress (migration 035). */}
+                      <span className="bk-locked">The event is in progress, so it can no longer be cancelled.</span>
                     </>}
                   </div>
                 )}
