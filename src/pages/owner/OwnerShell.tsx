@@ -18,8 +18,12 @@ export default function OwnerShell() {
 function OwnerNav() {
   const { userId } = useAuth()
   const pending = useQuery(async () => {
-    const { count } = await db().from('bookings').select('id', { count: 'exact', head: true }).eq('status', 'pending')
-    return count ?? 0
+    // New requests plus change requests: everything in Bookings that waits for the caterer's answer.
+    const [bookings, changes] = await Promise.all([
+      db().from('bookings').select('id', { count: 'exact', head: true }).eq('status', 'pending'),
+      db().from('booking_change_requests').select('id', { count: 'exact', head: true }).eq('status', 'open'),
+    ])
+    return (bookings.count ?? 0) + (changes.count ?? 0)
   }, [userId])
   // New booking request (notification) or any booking status change: update the badge at once.
   useLiveRefresh(userId, pending.reload, ['bookings'])

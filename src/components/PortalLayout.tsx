@@ -134,7 +134,12 @@ export function PortalLayout({ portalName, items, greeting = 'Here’s what’s 
     }
     refresh()
     const channel = client.channel(`portal-notifications-${userId}`)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'notifications', filter: `user_id=eq.${userId}` }, refresh)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'notifications', filter: `user_id=eq.${userId}` }, payload => {
+        refresh()
+        // A customer changed a booking, or asked to: say so on whatever page is open.
+        const row = payload.new as { title?: string; body?: string; type?: string }
+        if (payload.eventType === 'INSERT' && row.body && (row.type === 'booking_change' || row.title === 'Booking updated')) toast(row.body, 'info')
+      })
       .subscribe()
     // The Notifications page marked something read: count again so both always match.
     const stop = onUnreadChanged(refresh)

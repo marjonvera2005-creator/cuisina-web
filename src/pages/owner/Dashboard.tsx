@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { ArrowRight, CalendarBlank, CalendarCheck, ChartBar, ClipboardText, Clock, Crown, CurrencyCircleDollar, Sparkle, Star, Users } from '@phosphor-icons/react'
 import { Link } from 'react-router-dom'
 import { EmptyState, ErrorBanner, LeafSprig, StatusBadge } from '../../components/Brand'
+import { ChangeRequestsBanner } from '../../components/ChangeRequestsBanner'
 import { LineChart, StatCard } from '../../components/Charts'
 import { lastMonths } from '../../lib/charts'
 import { useAuth } from '../../lib/auth'
@@ -127,6 +128,7 @@ export default function Dashboard() {
           <Link to="/owner/business">Review application →</Link>
         </div>
       )}
+      <ChangeRequestsBanner />
       {pinned.data === false && (
         <div className="status-banner pending">
           <div><strong>Your business location is not pinned yet.</strong> Customers cannot see you on the map, and booking maps cannot show the route to events.</div>

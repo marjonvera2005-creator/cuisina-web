@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { EmptyState, ErrorBanner, StatusBadge } from '../../components/Brand'
 import { Avatar } from '../../components/Charts'
+import { ChangeRequestsBanner } from '../../components/ChangeRequestsBanner'
 import { ConfirmDialog } from '../../components/Dialog'
 import { ReportProblemDialog } from '../../components/ReportProblem'
 import type { ReportCategory } from '../../components/ReportProblem'
@@ -64,7 +65,16 @@ type BookingSnapshot = {
   total: number
 }
 /** A customer's request to change an accepted booking. */
-type ChangeRequest = { id: string; booking_id: string; note: string | null; current_booking: BookingSnapshot; requested: BookingSnapshot; created_at: string }
+type ChangeRequest = {
+  id: string; booking_id: string; customer_id: string; status: 'open' | 'approved' | 'rejected' | 'cancelled'
+  note: string | null; reject_reason: string | null; decided_by: string | null; decided_at: string | null
+  current_booking: BookingSnapshot; requested: BookingSnapshot; created_at: string
+}
+/** An edit saved while the booking was still pending (migration 036). */
+type BookingEdit = { id: string; booking_id: string; before_change: BookingSnapshot | null; after_change: BookingSnapshot | null; created_at: string }
+
+/** Same as booking_change_limit() in migration 036. */
+const CHANGE_LIMIT = 2
 
 /** One dish, add-on or styling line. `key` says what it is; `text` is how it is shown. */
 type Line = { key: string; text: string }
@@ -90,8 +100,8 @@ function diffLines(before: Line[], after: Line[]): LineDiff {
 }
 
 const menuLines = (snap: BookingSnapshot): Line[] =>
-  snap.menu_selection.flatMap(course => course.dishes.map(dish => ({ key: `${course.course}|${dish}`, text: `${course.course}: ${dish}` })))
-const addonLines = (snap: BookingSnapshot): Line[] => snap.addons.map(addon => ({ key: addon.name, text: `${addon.name} (${peso(addon.amount)})` }))
+  (snap.menu_selection ?? []).flatMap(course => course.dishes.map(dish => ({ key: `${course.course}|${dish}`, text: `${course.course}: ${dish}` })))
+const addonLines = (snap: BookingSnapshot): Line[] => (snap.addons ?? []).map(addon => ({ key: addon.name, text: `${addon.name} (${peso(addon.amount)})` }))
 
 /** A list inside the full comparison: removed lines crossed out, new lines in green. */
 function MarkedLines({ lines, marked, kind, empty }: { lines: Line[]; marked: Line[]; kind: 'added' | 'removed'; empty: string }) {
@@ -102,10 +112,9 @@ function MarkedLines({ lines, marked, kind, empty }: { lines: Line[]; marked: Li
   })}</>
 }
 
-/** What the customer wants to change: a summary first, then the full booking side by side. */
-function ChangeRequestView({ request, customer }: { request: ChangeRequest; customer: string }) {
+/** What changed between two versions of a booking: a summary first, then everything side by side. */
+function ChangeSummary({ before, after }: { before: BookingSnapshot; after: BookingSnapshot }) {
   const [full, setFull] = useState(false)
-  const before = request.current_booking, after = request.requested
   const lists = [
     { label: 'Menu', before: menuLines(before), after: menuLines(after), empty: '—' },
     { label: 'Add-ons & styling', before: addonLines(before), after: addonLines(after), empty: 'None' },
@@ -130,10 +139,7 @@ function ChangeRequestView({ request, customer }: { request: ChangeRequest; cust
     <tr key={label} className={now !== next ? 'changed' : undefined}><th>{label}</th><td>{now}</td><td>{next}</td></tr>
   )
   return (
-    <section className="bk-callout chg-request">
-      <h4>{customer} asks to change this booking <span className="status pending">Waiting for you</span></h4>
-      {request.note && <p className="bk-text">“{request.note}”</p>}
-
+    <>
       <div className="chg-summary">
         <div className="chg-total">
           <span>Total</span>
@@ -184,7 +190,61 @@ function ChangeRequestView({ request, customer }: { request: ChangeRequest; cust
           </tbody>
         </table>
       )}
+    </>
+  )
+}
+
+/** An unanswered change request, with the answer buttons right below what changed. */
+function ChangeRequestView({ request, customer, onAnswer }: { request: ChangeRequest; customer: string; onAnswer: (approve: boolean) => void }) {
+  return (
+    <section className="bk-callout chg-request">
+      <h4>{customer} asks to change this booking <span className="status pending">Waiting for you</span></h4>
+      {request.note && <p className="bk-text">“{request.note}”</p>}
+      <ChangeSummary before={request.current_booking} after={request.requested} />
+      <div className="bk-actions chg-answer">
+        <button type="button" className="approve" onClick={() => onAnswer(true)}>Approve changes</button>
+        <button type="button" className="reject danger-text" onClick={() => onAnswer(false)}>Reject changes</button>
+      </div>
       <p className="muted-note">Sent {formatDate(request.created_at)}. Nothing changes until you approve. If you reject, the customer sees your reason.</p>
+    </section>
+  )
+}
+
+/** Every change the customer already made or asked for on this booking, newest first. */
+function ChangeHistory({ requests, edits }: { requests: ChangeRequest[]; edits: BookingEdit[] }) {
+  const used = edits.length + requests.filter(request => request.status !== 'cancelled').length
+  if (requests.length + edits.length === 0) return null
+  const closed = (request: ChangeRequest) => request.decided_by === request.customer_id ? 'Withdrawn by the customer' : 'Closed without an answer'
+  const entries = [
+    ...edits.map(edit => ({
+      id: edit.id, at: edit.created_at, label: 'Edited while pending', tone: 'approved', status: 'Saved',
+      before: edit.before_change, after: edit.after_change, note: null as string | null, reason: null as string | null,
+    })),
+    // The open request has its own card at the top.
+    ...requests.filter(request => request.status !== 'open').map(request => ({
+      id: request.id, at: request.created_at, label: 'Change request',
+      tone: request.status === 'approved' ? 'approved' : request.status === 'rejected' ? 'rejected' : 'suspended',
+      status: request.status === 'approved' ? 'Approved' : request.status === 'rejected' ? 'Rejected' : closed(request),
+      before: request.current_booking as BookingSnapshot | null, after: request.requested as BookingSnapshot | null,
+      note: request.note, reason: request.reject_reason,
+    })),
+  ].sort((a, b) => b.at.localeCompare(a.at))
+  return (
+    <section className="chg-history">
+      <h4>Changes by the customer <span className="chg-used">{Math.min(used, CHANGE_LIMIT)} of {CHANGE_LIMIT} used</span></h4>
+      {entries.map(entry => (
+        <details key={entry.id}>
+          <summary><span>{entry.label} <small>{formatDate(entry.at)}</small></span><span className={`status ${entry.tone}`}>{entry.status}</span></summary>
+          <div className="chg-entry">
+            {entry.note && <p className="bk-text">“{entry.note}”</p>}
+            {entry.before && entry.after
+              ? <ChangeSummary before={entry.before} after={entry.after} />
+              : <p className="muted-note">This edit was made before Cuisina started recording the details.</p>}
+            {entry.reason && <p className="bk-text"><b>Your reason:</b> {entry.reason}</p>}
+          </div>
+        </details>
+      ))}
+      <p className="muted-note">A customer can change a booking up to {CHANGE_LIMIT} times. Withdrawn requests do not count.</p>
     </section>
   )
 }
@@ -263,11 +323,20 @@ export default function Bookings() {
     const blocked = blockError ? null : new Set((blockRows ?? []).map(row => row.customer_id as string))
     // Cuisina's commission rate on each booking (migration 029). Empty = not available yet: the fee is hidden.
     const rates = await fetchCommissionRates(business.id)
-    // Open change requests from customers (migration 031). An error (migration not run yet) means none.
-    const { data: requestRows } = await db().from('booking_change_requests')
-      .select('id,booking_id,note,current_booking,requested,created_at').eq('business_id', business.id).eq('status', 'open')
-    const changes = new Map(((requestRows ?? []) as ChangeRequest[]).map(row => [row.booking_id, row]))
-    return { business, bookings: rows as unknown as BookingRow[], info, home, blocked, rates, changes }
+    // Change requests (migration 031) and edits of pending bookings (migration 036).
+    // An error (migration not run yet) means none.
+    const [{ data: requestRows }, { data: editRows }] = await Promise.all([
+      db().from('booking_change_requests')
+        .select('id,booking_id,customer_id,status,note,reject_reason,decided_by,decided_at,current_booking,requested,created_at').eq('business_id', business.id),
+      db().from('booking_edits').select('id,booking_id,before_change,after_change,created_at').eq('business_id', business.id),
+    ])
+    const requests = new Map<string, ChangeRequest[]>()
+    for (const row of (requestRows ?? []) as ChangeRequest[]) requests.set(row.booking_id, [...(requests.get(row.booking_id) ?? []), row])
+    const edits = new Map<string, BookingEdit[]>()
+    for (const row of (editRows ?? []) as BookingEdit[]) edits.set(row.booking_id, [...(edits.get(row.booking_id) ?? []), row])
+    // The unanswered request of each booking (at most one).
+    const changes = new Map(((requestRows ?? []) as ChangeRequest[]).filter(row => row.status === 'open').map(row => [row.booking_id, row]))
+    return { business, bookings: rows as unknown as BookingRow[], info, home, blocked, rates, changes, requests, edits }
   }, [userId])
 
   // null = automatic: pending when there are requests waiting, otherwise all.
@@ -296,7 +365,7 @@ export default function Bookings() {
       const status = data.bookings.find(booking => booking.id === focusId)?.status
       const group = GROUPS.find(g => status && g.statuses.includes(status))
       if (group) setExpanded(current => ({ ...current, [group.key]: true }))
-      setTimeout(() => document.getElementById(`booking-${focusId}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 50)
+      setTimeout(() => document.getElementById(`booking-${focusId}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50)
     }
     setSearchParams({}, { replace: true })
   }, [focusId, data, setSearchParams])
@@ -308,7 +377,12 @@ export default function Bookings() {
     const channel = client.channel(`owner-bookings-${businessId}`)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'bookings', filter: `business_id=eq.${businessId}` }, reload)
       .subscribe()
-    return () => { void client.removeChannel(channel) }
+    // Change requests and edits: a separate channel, so a missing table cannot stop the one above.
+    const changeChannel = client.channel(`owner-booking-changes-${businessId}`)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'booking_change_requests', filter: `business_id=eq.${businessId}` }, reload)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'booking_edits', filter: `business_id=eq.${businessId}` }, reload)
+      .subscribe()
+    return () => { void client.removeChannel(channel); void client.removeChannel(changeChannel) }
   }, [businessId, reload])
 
   async function run(reason: string) {
@@ -393,12 +467,17 @@ export default function Bookings() {
             <span className="bk-cell" data-label="Event date">{formatDate(booking.event_date)}<small>{formatTime(booking.event_time)}</small></span>
             <span className="bk-cell" data-label="Guests">{booking.guest_count}</span>
             <span className="bk-cell bk-total" data-label="Total">{peso(booking.total_price)}</span>
-            <span className="bk-cell"><StatusBadge status={booking.status} />{booking.status === 'pending' && <HoldNotice booking={booking} short />}{data.changes.has(booking.id) && <span className="chg-tag">Change request</span>}</span>
+            <span className="bk-cell"><StatusBadge status={booking.status} />{booking.status === 'pending' && <HoldNotice booking={booking} short />}{data.changes.has(booking.id) && <span className="chg-tag">Change request</span>}{booking.status === 'pending' && data.edits.has(booking.id) && <span className="chg-tag edited">Edited</span>}</span>
             <svg className="chevron" viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><path d="M4 6l4 4 4-4" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" /></svg>
           </button>
           {open && (
             <div className="bk-detail">
               <div className="bk-main">
+                {/* Waiting for an answer: first, so it is never missed below the map and menu. */}
+                {data.changes.has(booking.id) && (
+                  <ChangeRequestView request={data.changes.get(booking.id)!} customer={name}
+                    onAnswer={approve => setAnswering({ request: data.changes.get(booking.id)!, booking, approve })} />
+                )}
                 <section>
                   <h4>Event</h4>
                   <dl className="bk-facts">
@@ -455,7 +534,7 @@ export default function Bookings() {
                   </section>
                 )}
                 {booking.rejection_reason && <section><h4>Reason</h4><p className="bk-text">{booking.rejection_reason}</p></section>}
-                {data.changes.has(booking.id) && <ChangeRequestView request={data.changes.get(booking.id)!} customer={name} />}
+                <ChangeHistory requests={data.requests.get(booking.id) ?? []} edits={data.edits.get(booking.id) ?? []} />
               </div>
               <aside className="bk-side">
                 <CustomerCheck customer={booking.customer} info={data.info[booking.customer_id]} />
@@ -466,10 +545,6 @@ export default function Bookings() {
                       <button className="approve" onClick={() => ask(booking, 'accepted', 'Accept this booking?')}>Accept booking</button>
                       {booking.owner_proposal?.status !== 'open' && <button className="reject" onClick={() => { setSuggestTotal(''); setSuggest(booking) }}>Suggest changes</button>}
                       <button className="reject danger-text" onClick={() => ask(booking, 'rejected', 'Reject this booking?', true, true)}>Reject</button>
-                    </>}
-                    {booking.status === 'accepted' && data.changes.has(booking.id) && <>
-                      <button className="approve" onClick={() => setAnswering({ request: data.changes.get(booking.id)!, booking, approve: true })}>Approve changes</button>
-                      <button className="reject danger-text" onClick={() => setAnswering({ request: data.changes.get(booking.id)!, booking, approve: false })}>Reject changes</button>
                     </>}
                     {booking.status === 'accepted' && <>
                       <button className="approve" onClick={() => ask(booking, 'in_progress', 'Mark this event as in progress?')}>Start event</button>
@@ -512,6 +587,7 @@ export default function Bookings() {
   return (
     <>
       <ErrorBanner message={problem} />
+      <ChangeRequestsBanner refreshKey={[...data.changes.values()].map(request => request.id).sort().join()} />
       <div className="bk-toolbar">
         <div className="bk-tabs" role="tablist" aria-label="Filter bookings by status">
           {FILTERS.map(option => {
@@ -609,7 +685,7 @@ export default function Bookings() {
       {action && (
         <ConfirmDialog
           title={action.title}
-          description={`${action.booking.customer?.full_name || 'Customer'} · ${formatDate(action.booking.event_date)}, ${formatTime(action.booking.event_time)} · ${action.booking.guest_count} guests · ${peso(action.booking.total_price)}. The customer will be notified.`}
+          description={`${action.booking.customer?.full_name || 'Customer'} · ${formatDate(action.booking.event_date)}, ${formatTime(action.booking.event_time)} · ${action.booking.guest_count} guests · ${peso(action.booking.total_price)}. The customer will be notified.${data.changes.has(action.booking.id) ? ' Note: this customer’s change request has no answer yet. It will be closed without one.' : ''}`}
           confirmLabel={ACTION_LABELS[action.status] ?? 'Confirm'}
           inputLabel={action.needsReason ? 'Reason (shared with the customer)' : undefined}
           inputRequired={action.status === 'rejected'}
